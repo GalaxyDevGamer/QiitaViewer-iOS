@@ -1,4 +1,4 @@
-platform :ios, '11.3'
+platform :ios, '11.4'
 use_frameworks!
 target 'QiitaViewer' do
 pod 'Alamofire'
