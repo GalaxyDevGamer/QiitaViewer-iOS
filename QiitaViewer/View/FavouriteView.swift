@@ -10,9 +10,8 @@ import UIKit
 import RealmSwift
 import Alamofire
 
-class FavouriteView: UIViewController, UITableViewDelegate, UITableViewDataSource {
-    
-    @IBOutlet var tableView: UITableView!
+class FavouriteView: UITableViewController {
+
     var favourites: Results<Articles>!
     
     var images: [UIImage] = []
@@ -21,9 +20,10 @@ class FavouriteView: UIViewController, UITableViewDelegate, UITableViewDataSourc
         super.viewDidLoad()
         
         // Do any additional setup after loading the view.
-        tableView.delegate = self
-        tableView.dataSource = self
+        self.tableView.delegate = self
+        self.tableView.dataSource = self
         self.navigationItem.title = "Favourites"
+        self.tableView.register(UINib(nibName: "ArticleCell", bundle: nil), forCellReuseIdentifier: "Cell")
     }
     
     override func didReceiveMemoryWarning() {
@@ -60,8 +60,8 @@ class FavouriteView: UIViewController, UITableViewDelegate, UITableViewDataSourc
     }
     
     @IBAction func addClick(_ sender: Any) {
-        let alert = UIAlertController(title: nil, message: "Add folder", preferredStyle: UIAlertControllerStyle.alert)
-        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+        let alert = UIAlertController(title: nil, message: "Add folder", preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
         //textfiledの追加
         alert.addTextField(configurationHandler: {(text:UITextField!) -> Void in
             let realm = try! Realm()
@@ -75,9 +75,9 @@ class FavouriteView: UIViewController, UITableViewDelegate, UITableViewDataSourc
         })
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let view = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "WebViewBoard") as! WebViewer
+        let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
         view.articleID = favourites[indexPath.row].id
         view.articleTitle = favourites[indexPath.row].title
         view.articleUrl = favourites[indexPath.row].url
@@ -86,20 +86,25 @@ class FavouriteView: UIViewController, UITableViewDelegate, UITableViewDataSourc
         view.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(view, animated: true)
     }
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Favourites", for: indexPath)
-        cell.textLabel?.text = favourites[indexPath.row].title
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
+        cell.title.text = favourites[indexPath.row].title
         if images.count != favourites.count {
-            cell.imageView?.image = UIImage(named: "ic_image")
+            cell.thumbnail.image = UIImage(named: "ic_image")
         } else {
-            cell.imageView?.image = images[indexPath.row]
+            cell.thumbnail.image = images[indexPath.row]
         }
         return cell
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return favourites.count
     }
+    
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 100
+    }
+    
     /*
      // MARK: - Navigation
      

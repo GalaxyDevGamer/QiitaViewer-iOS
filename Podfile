@@ -7,4 +7,8 @@ pod 'SwiftyJSON'
 pod 'RealmSwift'
 pod 'Firebase/Core'
 pod 'Firebase/Firestore'
+pod 'ObjectMapper'
+pod 'AlamofireObjectMapper'
+pod 'RxSwift'
+pod 'RxCocoa'
 end

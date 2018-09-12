@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Jit-KP-lKz">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.9"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Navigation Controller-->
+        <scene sceneID="lrS-gK-uO3">
+            <objects>
+                <navigationController id="Jit-KP-lKz" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="vVs-qK-o7e">
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="5Sk-IC-10h" kind="relationship" relationship="rootViewController" id="B9J-3P-kTB"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="DTW-0g-o4F" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-892" y="132"/>
+        </scene>
+        <!--Browser-->
+        <scene sceneID="eir-Cj-ZUb">
+            <objects>
+                <viewController storyboardIdentifier="BrowserBoard" title="Browser" useStoryboardIdentifierAsRestorationIdentifier="YES" id="5Sk-IC-10h" customClass="BrowserView" customModule="QiitaViewer" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Kfl-1L-2jk">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <wkWebView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="MgY-zf-OmC">
+                                <rect key="frame" x="0.0" y="64" width="375" height="603"/>
+                                <color key="backgroundColor" red="0.36078431370000003" green="0.38823529410000002" blue="0.4039215686" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <wkWebViewConfiguration key="configuration">
+                                    <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
+                                    <wkPreferences key="preferences"/>
+                                </wkWebViewConfiguration>
+                            </wkWebView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="MgY-zf-OmC" firstAttribute="top" secondItem="aBZ-yR-WZE" secondAttribute="top" id="HQG-Un-Slt"/>
+                            <constraint firstItem="aBZ-yR-WZE" firstAttribute="trailing" secondItem="MgY-zf-OmC" secondAttribute="trailing" id="R65-Xt-4Iw"/>
+                            <constraint firstItem="MgY-zf-OmC" firstAttribute="leading" secondItem="aBZ-yR-WZE" secondAttribute="leading" id="dkI-Cd-PyO"/>
+                            <constraint firstItem="aBZ-yR-WZE" firstAttribute="bottom" secondItem="MgY-zf-OmC" secondAttribute="bottom" id="fQs-CT-3dL"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="aBZ-yR-WZE"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="OyJ-3A-bwn">
+                        <rightBarButtonItems>
+                            <barButtonItem title="Stock" image="UnStocked24pt" id="xIV-PH-UWF">
+                                <connections>
+                                    <action selector="stockClick:" destination="5Sk-IC-10h" id="5at-tL-SQf"/>
+                                </connections>
+                            </barButtonItem>
+                            <barButtonItem title="Like" image="UnLiked24pt" id="osI-HX-YCv">
+                                <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <connections>
+                                    <action selector="likeClick:" destination="5Sk-IC-10h" id="iqp-KB-O3Z"/>
+                                </connections>
+                            </barButtonItem>
+                        </rightBarButtonItems>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="like" destination="osI-HX-YCv" id="hzV-nH-InL"/>
+                        <outlet property="stock" destination="xIV-PH-UWF" id="Ybn-eS-HkT"/>
+                        <outlet property="webView" destination="MgY-zf-OmC" id="1pt-Yc-8HO"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ufM-mk-yqQ" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-193" y="132"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="UnLiked24pt" width="24" height="24"/>
+        <image name="UnStocked24pt" width="24" height="24"/>
+    </resources>
+</document>

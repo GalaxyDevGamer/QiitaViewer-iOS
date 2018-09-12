@@ -11,10 +11,9 @@ import Alamofire
 import SwiftyJSON
 import RealmSwift
 
-class SearchView: UIViewController, UISearchBarDelegate, UITableViewDelegate, UITableViewDataSource {
-    @IBOutlet var tableView: UITableView!
+class SearchView: UITableViewController, UISearchBarDelegate {
     
-    var data: [JSON] = []
+    var result: [JSON] = []
     var images: [UIImage] = []
     
     var loading = false
@@ -23,7 +22,6 @@ class SearchView: UIViewController, UISearchBarDelegate, UITableViewDelegate, UI
     var swipeRefresh: UIRefreshControl!
     
     var page = 0
-    var max = 0
     
     var searchBar: UISearchBar!
     
@@ -34,10 +32,9 @@ class SearchView: UIViewController, UISearchBarDelegate, UITableViewDelegate, UI
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        indicator = UIActivityIndicatorView()
+        indicator = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.whiteLarge)
         indicator.frame = CGRect(x: 0, y: 0, width: 300, height: 300)
         indicator.center = self.view.center
-        indicator.activityIndicatorViewStyle = UIActivityIndicatorViewStyle.gray
         self.view.addSubview(indicator)
         searchBar = UISearchBar()
         searchBar.delegate = self
@@ -46,8 +43,7 @@ class SearchView: UIViewController, UISearchBarDelegate, UITableViewDelegate, UI
         searchBar.barStyle = UIBarStyle.default
         searchBar.showsCancelButton = true
         self.navigationItem.titleView = searchBar
-        tableView.delegate = self
-        tableView.dataSource = self
+        self.tableView.register(UINib(nibName: "ArticleCell", bundle: nil), forCellReuseIdentifier: "Cell")
         loadHistory()
         // Do any additional setup after loading the view.
     }
@@ -66,39 +62,37 @@ class SearchView: UIViewController, UISearchBarDelegate, UITableViewDelegate, UI
     func searchArticles(){
         indicator.startAnimating()
         page += 1
-        max = 0
         loading = true
-        let auth = ["Authorization": "Bearer 78a8efc0f8714dbb58b16dc51c4199d70b8d9cfe"]
+        let auth = ["Authorization": "Bearer "+UserDefaults.standard.string(forKey: "access_token")!]
         let params: Parameters = ["page": page, "query": searchBar.text as Any]
-        Alamofire.request("https://qiita.com/api/v2/items", method: .get, parameters: params, encoding: URLEncoding.default, headers: auth).validate().responseJSON(completionHandler: { response in
-            switch response.result {
-            case .success:
+        Alamofire.request(HOST+API.Article.rawValue, method: .get, parameters: params, encoding: URLEncoding.default, headers: auth).validate().responseJSON(completionHandler: { response in
+            if response.result.isSuccess {
                 let json = JSON(response.result.value ?? 0)
+                let group = DispatchGroup()
                 json.forEach{(_, data) in
-                    self.data.append(data)
-                    Alamofire.request(data["user"]["profile_image_url"].string!).responseData { response in
-                        switch response.result {
-                        case .success(_):
-                            if let image = UIImage(data: response.data!) {
-                                self.images.append(image)
+                    group.enter()
+                    DispatchQueue(label: "loadData").async(group: group) {
+                        Alamofire.request(data["user"]["profile_image_url"].string!).responseImage(completionHandler: { (response) in
+                            if response.result.isSuccess {
+                                self.images.append(response.value!)
+                                print("image downloaded: \(self.images.count): \(self.result.count)")
                             } else {
                                 self.images.append(UIImage(named: "ic_image")!)
                             }
-                        case .failure(_):
-                            self.images.append(UIImage(named: "ic_image")!)
-                        }
-                        if self.images.count == data.count {
-                            self.loading = false
-                            self.isSearched = true
-                            self.max = self.data.count
-                            self.tableView.reloadData()
-                            self.indicator.stopAnimating()
-                        }
+                            self.result.append(data)
+                            group.leave()
+                        })
                     }
                 }
-            case .failure(_):
-                let alert = UIAlertController(title: "Error", message: "No result found", preferredStyle: UIAlertControllerStyle.alert)
-                alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+                group.notify(queue: .main, execute: {
+                    self.tableView.reloadData()
+                    self.loading = false
+                    self.indicator.stopAnimating()
+                })
+                self.isSearched = true
+            } else {
+                let alert = UIAlertController(title: "Error", message: "No result found", preferredStyle: UIAlertController.Style.alert)
+                alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
                 self.present(alert, animated: true, completion: nil)
                 self.indicator.stopAnimating()
                 self.loading = false
@@ -123,21 +117,22 @@ class SearchView: UIViewController, UISearchBarDelegate, UITableViewDelegate, UI
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
-        data.removeAll()
+        result.removeAll()
         page = 0
         searchArticles()
         addToHistory()
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        data.removeAll()
+        result.removeAll()
         page = 0
         isSearched = false
         searchBar.text = ""
         searchBar.resignFirstResponder()
         loadHistory()
     }
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    
+    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
         {   //一番下
             if !loading  && isSearched {
@@ -151,15 +146,15 @@ class SearchView: UIViewController, UISearchBarDelegate, UITableViewDelegate, UI
         }
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         if isSearched {
-            let view = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "WebViewBoard") as! WebViewer
-            view.articleID = data[indexPath.row]["id"].string
-            view.articleTitle = data[indexPath.row]["title"].string
-            view.articleUrl = data[indexPath.row]["url"].string
-            view.articleBody = data[indexPath.row]["body"].string
-            view.articleImage = data[indexPath.row]["user"]["profile_image_url"].string
+            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
+            view.articleID = result[indexPath.row]["id"].string
+            view.articleTitle = result[indexPath.row]["title"].string
+            view.articleUrl = result[indexPath.row]["url"].string
+            view.articleBody = result[indexPath.row]["body"].string
+            view.articleImage = result[indexPath.row]["user"]["profile_image_url"].string
             view.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(view, animated: true)
         } else {
@@ -168,38 +163,28 @@ class SearchView: UIViewController, UISearchBarDelegate, UITableViewDelegate, UI
         }
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Results", for: indexPath)
-        //        Alamofire.request(data[indexPath.row]["user"]["profile_image_url"].string!, method: .get).responseImage(completionHandler: { response in
-        //            guard let image: UIImage = response.result.value else {
-        //                // Handle error
-        //                cell.imageView?.image = UIImage(named: "ic_image")
-        //                return
-        //            }
-        //            // Do stuff with your image
-        //            cell.imageView?.image = image
-        //        })
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if isSearched {
-            cell.textLabel?.text = data[indexPath.row]["title"].string
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
+            cell.setData(thumbnail: images[indexPath.row], user_id: result[indexPath.row]["user"]["id"].string!, title: result[indexPath.row]["title"].string!)
+            return cell
         } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Results", for: indexPath)
             cell.textLabel?.text = history[indexPath.row].word
+            return cell
         }
-        if isSearched {
-            if images.count != data.count {
-                cell.imageView?.image = UIImage(named: "ic_image")
-            } else if max > 0{
-                cell.imageView?.image = images[indexPath.row]
-            }
-        }
-        return cell
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if isSearched {
-            return data.count
+            return result.count
         } else {
             return history.count
         }
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 100
     }
     /*
      // MARK: - Navigation
