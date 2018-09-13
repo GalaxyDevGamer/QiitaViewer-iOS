@@ -13,33 +13,48 @@ import AlamofireObjectMapper
 
 class ArticleRequest {
     
-    func request(page: Int) -> Observable<Article>{
-        return Observable.create({ (observer: AnyObserver<Article>) -> Disposable in
-            Alamofire.request(HOST+API.Article.rawValue+"?page=\(page)").responseArray { (response: DataResponse<[Article]>) in
+    static let shaeredInstance = ArticleRequest()
+    
+    let disposeBag = DisposeBag()
+    
+    func request(page: Int) -> Observable<[Article]>{
+        return Observable.create({ (observer: AnyObserver<[Article]>) -> Disposable in
+            Alamofire.request(HOST+API.Article.rawValue, method: .get, parameters: ["page":page], encoding: URLEncoding.default, headers: nil).responseArray(completionHandler: { (response: DataResponse<[Article]>) in
                 if response.result.isSuccess {
-                    let group = DispatchGroup()
-                    for article in response.result.value! {
-                        group.enter()
-                        DispatchQueue(label: "getData").async(group: group) {
-                            Alamofire.request((article.user?.profile_image_url)!).responseImage(completionHandler: { (response) in
-                                if response.result.isSuccess {
-                                    ArticleManager.sharedInstance.images.append(response.value!)
-                                } else {
-                                    ArticleManager.sharedInstance.images.append(UIImage(named: "ic_image")!)
-                                }
-                                ArticleManager.sharedInstance.articles.append(article)
-                                group.leave()
-                            })
-                        }
-                    }
-                    group.notify(queue: .main, execute: {
-                        observer.onCompleted()
-                    })
+                    observer.onNext(response.result.value!)
                 } else {
                     observer.onError(response.result.error!)
-                    print("AlamofireObjectMapper failer")
                 }
-            }
+                observer.onCompleted()
+            })
+            return Disposables.create()
+        })
+    }
+    
+    func getStocks(page: Int) -> Observable<[Article]> {
+        return Observable.create({ (observer) -> Disposable in
+            Alamofire.request(HOST+"/users/\(UserDefaults.standard.string(forKey: "id")!)/stocks", method: .get, parameters: ["page": page], encoding: URLEncoding.default, headers:nil).responseArray(completionHandler: { (response: DataResponse<[Article]>) in
+                if response.result.isSuccess {
+                    observer.onNext(response.result.value!)
+                } else {
+                    observer.onError(response.result.error!)
+                }
+                observer.onCompleted()
+            })
+            return Disposables.create()
+        })
+    }
+    
+    func downloadImage(url: String) -> Observable<UIImage> {
+        return Observable.create({ (observer: AnyObserver<UIImage>) -> Disposable in
+            Alamofire.request(url).responseImage(completionHandler: { (response) in
+                if response.result.isSuccess {
+                    observer.onNext(response.result.value!)
+                } else {
+                    observer.onError(response.result.error!)
+                }
+                observer.onCompleted()
+            })
             return Disposables.create()
         })
     }

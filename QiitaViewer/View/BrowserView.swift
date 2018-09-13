@@ -18,6 +18,7 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
     var articleBody: String?
     var articleUrl: String?
     var articleImage: String?
+    var user_id: String!
     
     var isStocked = false
     var isLiked = false
@@ -29,6 +30,7 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
     override func loadView() {
         super.loadView()
         webView.navigationDelegate = self
+        webView.uiDelegate = self
         checkStock()
         checkLike()
         if UserDefaults.standard.string(forKey: "id") == nil {
@@ -135,6 +137,38 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
                 }
             }
         }
+    }
+    
+    @IBAction func categoryClick(_ sender: Any) {
+        let realm = try! Realm()
+        if realm.objects(Category.self).count == 0 {
+            showDialog(title: "No categories found", message: "Add some categories on Category Tab")
+            return
+        }
+        let alert = UIAlertController(title: "Add to category", message: "Choose category to add", preferredStyle: UIAlertController.Style.alert)
+        for category in try! Realm().objects(Category.self) {
+            alert.addAction(UIAlertAction(title: category.name, style: UIAlertAction.Style.default, handler: { (action) in
+                let data = realm.objects(Category.self).filter("name == %@", category.name!).first
+                let article = Articles()
+                article.id = self.articleID
+                article.title = self.articleTitle
+                article.url = self.articleUrl
+                article.image = self.articleImage
+                article.user_id = self.user_id
+                let saveData = Category()
+                saveData.name = category.name
+                data?.articles.forEach({ (article) in
+                    saveData.articles.append(article)
+                })
+                saveData.articles.append(article)
+                try! realm.write {
+                    realm.add(saveData, update: true)
+                }
+                self.showDialog(title: "Success", message: "The article added to category")
+            }))
+        }
+        alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
     }
     
     @objc func showDialog(title: String, message: String) {

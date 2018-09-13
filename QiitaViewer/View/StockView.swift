@@ -8,11 +8,11 @@
 
 import UIKit
 import Alamofire
-import SwiftyJSON
+import RxSwift
 
 class StockView: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
-    var stocks: [JSON] = []
+    var stocks: [Article] = []
     var images: [UIImage] = []
     
     var loading = false
@@ -20,6 +20,9 @@ class StockView: UIViewController, UITableViewDelegate, UITableViewDataSource {
     var page = 0
     
     var swipeRefresh: UIRefreshControl!
+    
+    let disposeBag = DisposeBag()
+    
     
     var indicator: UIActivityIndicatorView!
     @IBOutlet weak var tableView: UITableView!
@@ -83,47 +86,41 @@ class StockView: UIViewController, UITableViewDelegate, UITableViewDataSource {
         indicator.startAnimating()
         loading = true
         page+=1
-        let params = ["page":page]
-        Alamofire.request(HOST+"/users/\(UserDefaults.standard.string(forKey: "id")!)/stocks", method: .get, parameters: params, encoding: URLEncoding.default, headers:nil).validate().responseJSON(completionHandler: { response in
-            if response.result.isSuccess {
-                let json = JSON(response.value ?? 0)
-                let group = DispatchGroup()
-                json.forEach{ (_, data) in
-                    group.enter()
-                    print("enter")
-                    DispatchQueue(label: "loadCell").async(group: group) {
-                        Alamofire.request(data["user"]["profile_image_url"].string!).responseImage(completionHandler: { (response) in
-                            if response.result.isSuccess {
-                                self.images.append(response.value!)
-                                print("image downloaded: \(self.images.count): \(self.stocks.count)")
-                            } else {
-                                self.images.append(UIImage(named: "ic_image")!)
-                            }
-                            self.stocks.append(data)
-                            group.leave()
-                            print("leave")
-                        })
-                    }
+        ArticleRequest.shaeredInstance.getStocks(page: page).subscribe(onNext: { (articles) in
+            let group = DispatchGroup()
+            for article in articles {
+                group.enter()
+                print("enter")
+                DispatchQueue(label: "loadCell").async(group: group) {
+                    ArticleRequest.shaeredInstance.downloadImage(url: (article.user?.profile_image_url)!).subscribe(onNext: { (image) in
+                        self.images.append(image)
+                    }, onError: { (error) in
+                        self.images.append(UIImage(named: "ic_image")!)
+                    }, onCompleted: {
+                    }, onDisposed: {
+                        self.stocks.append(article)
+                        group.leave()
+                    }).disposed(by: self.disposeBag)
                 }
-                group.notify(queue: .main, execute: {
-                    self.tableView.reloadData()
-                    if self.stocks.count == 0 {
-                        self.noStockView.isHidden = false
-                    } else {
-                        self.noStockView.isHidden = true
-                    }
-                    self.loading = false
-                    self.indicator.stopAnimating()
-                    print("items: \(self.stocks.count), images: \(self.images.count)")
-                })
-            } else {
-                let alert = UIAlertController(title: "Error", message: "Failed to load stock data", preferredStyle: UIAlertController.Style.alert)
-                alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
-                self.present(alert, animated: true, completion: nil)
-                self.loading = false
-                self.indicator.stopAnimating()
             }
-        })
+            group.notify(queue: .main, execute: {
+                self.tableView.reloadData()
+                if self.stocks.count == 0 {
+                    self.noStockView.isHidden = false
+                } else {
+                    self.noStockView.isHidden = true
+                }
+                self.hideLoading()
+            })
+        }, onError: { (error) in
+            let alert = UIAlertController(title: "Error", message: "Failed to load stocks", preferredStyle: UIAlertController.Style.alert)
+            alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
+        }, onCompleted: {
+            
+        }) {
+            
+        }.disposed(by: disposeBag)
     }
     
     // MARK: - Table view data source
@@ -145,17 +142,18 @@ class StockView: UIViewController, UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         self.tableView.deselectRow(at: indexPath, animated: true)
         let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-        view.articleID = stocks[indexPath.row]["id"].string
-        view.articleTitle = stocks[indexPath.row]["title"].string
-        view.articleUrl = stocks[indexPath.row]["url"].string
-        view.articleImage = stocks[indexPath.row]["user"]["profile_image_url"].string
+        view.articleID = stocks[indexPath.row].id
+        view.articleTitle = stocks[indexPath.row].title
+        view.articleUrl = stocks[indexPath.row].url
+        view.articleImage = stocks[indexPath.row].user?.profile_image_url
+        view.user_id = stocks[indexPath.row].user?.id
         view.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(view, animated: true)
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
-        cell.setData(thumbnail: images[indexPath.row], user_id: stocks[indexPath.row]["user"]["id"].string!, title: stocks[indexPath.row]["title"].string!)
+        cell.setData(thumbnail: images[indexPath.row], user_id: (stocks[indexPath.row].user?.id)!, title: stocks[indexPath.row].title!)
         return cell
     }
 
@@ -170,6 +168,11 @@ class StockView: UIViewController, UITableViewDelegate, UITableViewDataSource {
             //一番下以外
             //@"(´・ω・`)");
         }
+    }
+    
+    func hideLoading() {
+        self.loading = false
+        self.indicator.stopAnimating()
     }
     /*
     // Override to support conditional editing of the table view.

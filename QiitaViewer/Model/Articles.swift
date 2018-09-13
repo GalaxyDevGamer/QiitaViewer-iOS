@@ -13,7 +13,7 @@ import RealmSwift
 class Articles: Object {
     dynamic var id:String?
     dynamic var title: String?
-    dynamic var body: String?
     dynamic var url:String?
     dynamic var image: String?
+    dynamic var user_id: String!
 }

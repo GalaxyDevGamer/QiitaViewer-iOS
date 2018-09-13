@@ -12,14 +12,13 @@ import AlamofireImage
 import SwiftyJSON
 import ObjectMapper
 import AlamofireObjectMapper
+import RxSwift
 
 class HomeView: UITableViewController, URLSessionDelegate {
     
     var page = 0
-    var max = 0
     var size = 0
     
-    var items: [JSON] = []
     var images: [UIImage] = []
     var articles: [Article] = []
     
@@ -29,6 +28,9 @@ class HomeView: UITableViewController, URLSessionDelegate {
     var swipeRefresh: UIRefreshControl!
     
     var indicator: UIActivityIndicatorView!
+    
+    let disposeBag = DisposeBag()
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -60,80 +62,36 @@ class HomeView: UITableViewController, URLSessionDelegate {
         if UserDefaults.standard.string(forKey: "access_token") != nil {
             authorization = ["Authorization": "Bearer "+UserDefaults.standard.string(forKey: "access_token")!]
         }
-        let params: Parameters = ["page":page]
-        Alamofire.request(HOST+API.Article.rawValue, method: .get, parameters: params, encoding: URLEncoding.default, headers:nil).validate().responseJSON(completionHandler: { response in
-            if response.result.isSuccess {
-                if self.isSwipeRefresh {
-                    self.items.removeAll()
-                    self.images.removeAll()
+        ArticleRequest.shaeredInstance.request(page: page).subscribe(onNext: { (articles) in
+            let group = DispatchGroup()
+            for article in articles {
+                group.enter()
+                DispatchQueue(label: "getData").async(group: group) {
+                    ArticleRequest.shaeredInstance.downloadImage(url: (article.user?.profile_image_url)!).subscribe(onNext: { (image) in
+                        ArticleManager.sharedInstance.images.append(image)
+                    }, onError: { (error) in
+                        ArticleManager.sharedInstance.images.append(UIImage(named: "ic_image")!)
+                    }, onCompleted: {
+                    }, onDisposed: {
+                        ArticleManager.sharedInstance.articles.append(article)
+                        group.leave()
+                    }).disposed(by: self.disposeBag)
                 }
-                let article = Mapper<Article>().map(JSONObject: response.result.value)
-                self.isSwipeRefresh = false
-                let json = JSON(response.value ?? 0)
-                let group = DispatchGroup()
-                json.forEach{ (_, data) in
-                    group.enter()
-                    DispatchQueue(label: "getData").async(group: group) {
-                        Alamofire.request(data["user"]["profile_image_url"].string!).responseImage(completionHandler: { (response) in
-//                            if response.result.isSuccess {
-//                                self.images.append(response.value!)
-//                                print("image downloaded: \(self.images.count): \(self.items.count)")
-//                            } else {
-//                                self.images.append(UIImage(named: "ic_image")!)
-//                            }
-//                            self.items.append(data)
-                            group.leave()
-                        })
-                    }
-                }
-                group.notify(queue: .main, execute: {
-                    self.tableView.reloadData()
-                    self.loading = false
-                    self.indicator.stopAnimating()
-                    print("items: \(self.items.count), images: \(self.images.count)")
-                })
-            } else {
-                let alert = UIAlertController(title: "Error", message: "Failed to get articles", preferredStyle: UIAlertController.Style.alert)
-                alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
-                self.present(alert, animated: true, completion: nil)
-                self.loading = false
-                self.indicator.stopAnimating()
             }
-        })
-        Alamofire.request(HOST+API.Article.rawValue+"?page=\(page)").responseArray { (response: DataResponse<[Article]>) in
-            if response.result.isSuccess {
-                let group = DispatchGroup()
-                if self.isSwipeRefresh {
-                    self.items.removeAll()
-                    self.images.removeAll()
-                }
-                self.isSwipeRefresh = false
-                for article in response.result.value! {
-                    group.enter()
-                    DispatchQueue(label: "getData").async(group: group) {
-                        Alamofire.request((article.user?.profile_image_url)!).responseImage(completionHandler: { (response) in
-                            if response.result.isSuccess {
-                                self.images.append(response.value!)
-                                print("image downloaded: \(self.images.count): \(self.items.count)")
-                            } else {
-                                self.images.append(UIImage(named: "ic_image")!)
-                            }
-                            self.articles.append(article)
-                            group.leave()
-                        })
-                    }
-                }
-                group.notify(queue: .main, execute: {
-                    self.tableView.reloadData()
-                    self.loading = false
-                    self.indicator.stopAnimating()
-                })
-            } else {
-                self.loading = false
-                self.indicator.stopAnimating()
-                print("AlamofireObjectMapper failer")
-            }
-        }
+            group.notify(queue: .main, execute: {
+                self.tableView.reloadData()
+                self.hideLoading()
+            })
+        }, onError: { (error) in
+            let alert = UIAlertController(title: "Error", message: "Failed to get articles", preferredStyle: UIAlertController.Style.alert)
+            alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
+            self.hideLoading()
+        }, onCompleted: {
+            
+        }) {
+
+        }.disposed(by: disposeBag)
     }
     
     @objc func onRefresh(_ sender: Any) -> Void {
@@ -164,24 +122,25 @@ class HomeView: UITableViewController, URLSessionDelegate {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-        view.articleID = articles[indexPath.row].id
-        view.articleTitle = articles[indexPath.row].title
-        view.articleUrl = articles[indexPath.row].url
-        view.articleImage = articles[indexPath.row].user?.profile_image_url
+        view.articleID = ArticleManager.sharedInstance.articles[indexPath.row].id
+        view.articleTitle = ArticleManager.sharedInstance.articles[indexPath.row].title
+        view.articleUrl = ArticleManager.sharedInstance.articles[indexPath.row].url
+        view.articleImage = ArticleManager.sharedInstance.articles[indexPath.row].user?.profile_image_url
+        view.user_id = ArticleManager.sharedInstance.articles[indexPath.row].user?.id
         view.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(view, animated: true)
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell") as! ArticleCell
-        cell.setData(thumbnail: images[indexPath.row], user_id: (articles[indexPath.row].user?.id)!, title: articles[indexPath.row].title!)
+        cell.setData(thumbnail: ArticleManager.sharedInstance.images[indexPath.row], user_id: (ArticleManager.sharedInstance.articles[indexPath.row].user?.id)!, title: ArticleManager.sharedInstance.articles[indexPath.row].title!)
         size+=1
         print("attached to cell: \(self.size)")
         return cell
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return articles.count
+        return ArticleManager.sharedInstance.articles.count
     }
     
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -213,6 +172,11 @@ class HomeView: UITableViewController, URLSessionDelegate {
                 }
             })
         }
+    }
+    
+    func hideLoading() {
+        self.loading = false
+        self.indicator.stopAnimating()
     }
     
     override func didReceiveMemoryWarning() {

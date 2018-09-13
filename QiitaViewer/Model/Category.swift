@@ -10,6 +10,11 @@ import UIKit
 import RealmSwift
 
 @objcMembers
-class Folders: Object {
-    dynamic var folder: String?
+class Category: Object {
+    dynamic var name: String?
+    let articles = List<Articles>()
+    
+    override static func primaryKey() -> String? {
+        return "name"
+    }
 }
