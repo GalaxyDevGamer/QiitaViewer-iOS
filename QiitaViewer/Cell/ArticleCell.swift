@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AlamofireImage
 
 class ArticleCell: UITableViewCell {
 
@@ -25,8 +26,8 @@ class ArticleCell: UITableViewCell {
         // Configure the view for the selected state
     }
     
-    func setData(thumbnail:UIImage, user_id: String, title:String) {
-        self.thumbnail.image = thumbnail
+    func setData(thumbnail:String, user_id: String, title:String) {
+        self.thumbnail.af_setImage(withURL: URL(string: thumbnail)!)
         self.user.text = user_id
         self.title.text = title
     }

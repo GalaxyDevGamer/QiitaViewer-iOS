@@ -10,9 +10,10 @@ import ObjectMapper
 
 class UserInfo: Mappable {
     
-    var id: String?
-    var description: String?
-    var profile_image_url: String?
+    var id: String!
+    var description: String!
+    var profile_image_url: String!
+    var name: String!
     
     required init?(map: Map) {
         
@@ -22,5 +23,6 @@ class UserInfo: Mappable {
         id <- map["id"]
         description <- map["description"]
         profile_image_url <- map["profile_image_url"]
+        name <- map["name"]
     }
 }

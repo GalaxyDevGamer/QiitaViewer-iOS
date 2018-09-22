@@ -7,24 +7,20 @@
 //
 
 import UIKit
-import Alamofire
 import RxSwift
+import RxCocoa
+import RxDataSources
 
-class StockView: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class StockView: UIViewController, UITableViewDelegate {
 
-    var stocks: [Article] = []
-    var images: [UIImage] = []
+    let viewModel = StockViewModel()
     
-    var loading = false
-    
-    var page = 0
-    
-    var swipeRefresh: UIRefreshControl!
+    var swipeRefresh = UIRefreshControl()
     
     let disposeBag = DisposeBag()
     
+    var indicator = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.whiteLarge)
     
-    var indicator: UIActivityIndicatorView!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var noStockView: UIView!
     
@@ -36,91 +32,78 @@ class StockView: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
-        navigationItem.title = "Stocks"
-        swipeRefresh = UIRefreshControl()
-        swipeRefresh.addTarget(self, action: #selector(onRefresh(_:)), for: UIControl.Event.valueChanged)
+        initUI()
+        swipeRefresh.rx.controlEvent(UIControl.Event.valueChanged).subscribe(onNext: { _ in
+            self.viewModel.swipeRefresh()
+        }).disposed(by: disposeBag)
+        TokenObserver.shared.authorizeState.asDriver().drive(noStockView.rx.isHidden).disposed(by: disposeBag)
+        StockRequest.shared.isStockAvailable.asDriver().drive(noStockView.rx.isHidden).disposed(by: disposeBag)
+        TokenObserver.shared.authorizeStateObserver().subscribe(onNext: { (status) in
+            if status {
+                self.viewModel.page = 0
+                self.viewModel.getStocks()
+            } else {
+                self.viewModel.stocks.removeAll()
+            }
+        }).disposed(by: disposeBag)
+        viewModel.showLoading.subscribe(onNext: { (isLoading) in
+            if isLoading {
+                self.indicator.startAnimating()
+            } else {
+                self.indicator.stopAnimating()
+            }
+        }).disposed(by: disposeBag)
+        viewModel.refreshing.subscribe { _ in
+            self.swipeRefresh.endRefreshing()
+        }.disposed(by: disposeBag)
+        viewModel.notifyError.subscribe(onNext: { (error) in
+            self.showError()
+        }).disposed(by: disposeBag)
+        self.navigationController?.navigationBar.barTintColor = UIColor.green
+    }
+    
+    func initUI() {
+        indicator.center = self.view.center
+        indicator.color = .gray
+        self.view.addSubview(indicator)
         self.tableView.addSubview(swipeRefresh)
         self.tableView.alwaysBounceVertical = true
-        self.tableView.delegate = self
-        self.tableView.dataSource = self
-        indicator = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.gray)
-        indicator.center = self.view.center
-        self.view.addSubview(indicator)
         self.tableView.register(UINib(nibName: "ArticleCell", bundle: nil), forCellReuseIdentifier: "Cell")
-        NotificationCenter.default.addObserver(self, selector: #selector(updateStatus), name: NSNotification.Name("UpdateStocks"), object: nil)
-        updateStatus()
+        let dataSource = RxTableViewSectionedAnimatedDataSource<SectionOfArticle>(configureCell: { (ds: TableViewSectionedDataSource<SectionOfArticle>, tableView: UITableView, indexPath: IndexPath, model: ArticleStruct) -> UITableViewCell in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
+            cell.setData(thumbnail: model.user.profile_image_url, user_id: model.user.id, title: model.title)
+            return cell
+        })
+        tableView.rx.setDelegate(self).disposed(by: disposeBag)
+        viewModel.stockNotify.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
+        Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, stock in
+            self.tableView.deselectRow(at: indexPath, animated: true)
+            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
+            view.articleID = stock.id
+            view.articleTitle = stock.title
+            view.articleUrl = stock.url
+            view.articleImage = stock.user.profile_image_url
+            view.user_id = stock.user.id
+            view.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(view, animated: true)
+        }.disposed(by: disposeBag)
+        tableView.rx.contentOffset.subscribe { scrollView in
+            if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
+            {   //一番下
+                if TokenObserver.shared.authorizeState.value {
+                    self.viewModel.getStocks()
+                }
+                //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
+            }else{
+                //一番下以外
+                //@"(´・ω・`)");
+            }
+        }.disposed(by: disposeBag)
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
-    }
-    
-    @objc func updateStatus() {
-        if UserDefaults.standard.string(forKey: "access_token") == nil {
-            stocks.removeAll()
-            images.removeAll()
-            self.tableView.reloadData()
-            noStockView.isHidden = false
-            self.tableView.isHidden = true
-        } else {
-            noStockView.isHidden = true
-            self.tableView.isHidden = false
-            getStocks()
-        }
-    }
-    
-    @objc func onRefresh(_ sender: Any) {
-        if !loading {
-            page = 0
-            stocks.removeAll()
-            getStocks()
-            swipeRefresh.endRefreshing()
-        }
-    }
-    
-    func getStocks(){
-        if UserDefaults.standard.string(forKey: "id") == nil {
-            return
-        }
-        indicator.startAnimating()
-        loading = true
-        page+=1
-        ArticleRequest.shaeredInstance.getStocks(page: page).subscribe(onNext: { (articles) in
-            let group = DispatchGroup()
-            for article in articles {
-                group.enter()
-                print("enter")
-                DispatchQueue(label: "loadCell").async(group: group) {
-                    ArticleRequest.shaeredInstance.downloadImage(url: (article.user?.profile_image_url)!).subscribe(onNext: { (image) in
-                        self.images.append(image)
-                    }, onError: { (error) in
-                        self.images.append(UIImage(named: "ic_image")!)
-                    }, onCompleted: {
-                    }, onDisposed: {
-                        self.stocks.append(article)
-                        group.leave()
-                    }).disposed(by: self.disposeBag)
-                }
-            }
-            group.notify(queue: .main, execute: {
-                self.tableView.reloadData()
-                if self.stocks.count == 0 {
-                    self.noStockView.isHidden = false
-                } else {
-                    self.noStockView.isHidden = true
-                }
-                self.hideLoading()
-            })
-        }, onError: { (error) in
-            let alert = UIAlertController(title: "Error", message: "Failed to load stocks", preferredStyle: UIAlertController.Style.alert)
-            alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
-            self.present(alert, animated: true, completion: nil)
-        }, onCompleted: {
-            
-        }) {
-            
-        }.disposed(by: disposeBag)
     }
     
     // MARK: - Table view data source
@@ -136,43 +119,15 @@ class StockView: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return stocks.count
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        self.tableView.deselectRow(at: indexPath, animated: true)
-        let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-        view.articleID = stocks[indexPath.row].id
-        view.articleTitle = stocks[indexPath.row].title
-        view.articleUrl = stocks[indexPath.row].url
-        view.articleImage = stocks[indexPath.row].user?.profile_image_url
-        view.user_id = stocks[indexPath.row].user?.id
-        view.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(view, animated: true)
+        return viewModel.stocks.count
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
-        cell.setData(thumbnail: images[indexPath.row], user_id: (stocks[indexPath.row].user?.id)!, title: stocks[indexPath.row].title!)
-        return cell
-    }
-
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
-        {   //一番下
-            if !loading {
-                getStocks()
-            }
-            //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
-        }else{
-            //一番下以外
-            //@"(´・ω・`)");
-        }
-    }
-    
-    func hideLoading() {
-        self.loading = false
-        self.indicator.stopAnimating()
+    func showError() {
+        let alert = UIAlertController(title: "Error", message: "Failed to load stocks."+plsCheckInternet, preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(UIAlertAction(title: "Retry", style: UIAlertAction.Style.default, handler: { (action) in
+            self.viewModel.getStocks()
+        }))
+        self.present(alert, animated: true, completion: nil)
     }
     /*
     // Override to support conditional editing of the table view.

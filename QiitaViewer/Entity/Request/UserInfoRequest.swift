@@ -6,8 +6,8 @@
 //  Copyright © 2018 GalaxySoftware. All rights reserved.
 //
 
-import Foundation
 import RxSwift
+import RxCocoa
 import Alamofire
 import AlamofireObjectMapper
 import AlamofireImage
@@ -15,7 +15,7 @@ import AlamofireImage
 class UserInfoRequest {
     static let sharedInstance = UserInfoRequest()
     
-    let disposeBag = DisposeBag()
+    let imageObserver = BehaviorRelay(value: UIImage(named: "User48pt"))
     
     func getUserInfo() -> Observable<UserInfo> {
         return Observable.create({ (obsever: AnyObserver<UserInfo>) -> Disposable in
@@ -31,17 +31,11 @@ class UserInfoRequest {
         })
     }
     
-    func getProfileImage(url: String) -> Observable<UIImage> {
-        return Observable.create({ (observer: AnyObserver<UIImage>) -> Disposable in
-            Alamofire.request(url).responseImage(completionHandler: { (response) in
-                if response.result.isSuccess {
-                    observer.onNext(response.result.value!)
-                } else {
-                    observer.onError(response.result.error!)
-                }
-                observer.onCompleted()
-            })
-            return Disposables.create()
+    func getProfileImage(url: String) {
+        Alamofire.request(url).responseImage(completionHandler: { (response) in
+            if response.result.isSuccess {
+                self.imageObserver.accept(response.result.value!)
+            }
         })
     }
     

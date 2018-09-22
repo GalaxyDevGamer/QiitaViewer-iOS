@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="iKo-6p-1JG">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="iKo-6p-1JG">
     <device id="retina5_9" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.9"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -34,50 +34,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view hidden="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="8Z2-kt-izP" userLabel="LoginView">
-                                <rect key="frame" x="0.0" y="88" width="375" height="690"/>
-                                <subviews>
-                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="User48pt" translatesAutoresizingMaskIntoConstraints="NO" id="UoQ-zS-2wx">
-                                        <rect key="frame" x="87" y="72" width="200" height="200"/>
-                                        <constraints>
-                                            <constraint firstAttribute="height" constant="200" id="Uh6-Ao-uCW"/>
-                                            <constraint firstAttribute="width" constant="200" id="iHF-7C-eKA"/>
-                                        </constraints>
-                                    </imageView>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Login to use more features." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uqk-jw-2S8">
-                                        <rect key="frame" x="46" y="300" width="282" height="24"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
-                                        <nil key="textColor"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="xWK-65-cZW">
-                                        <rect key="frame" x="62" y="370" width="250" height="36"/>
-                                        <color key="backgroundColor" red="0.0" green="0.97680455450000003" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
-                                        <state key="normal" title="Login">
-                                            <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                            <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="loginClick:" destination="r2E-lJ-fQh" eventType="touchUpInside" id="M1f-tJ-Lg1"/>
-                                        </connections>
-                                    </button>
-                                </subviews>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <constraints>
-                                    <constraint firstItem="xWK-65-cZW" firstAttribute="top" secondItem="uqk-jw-2S8" secondAttribute="bottom" constant="46" id="EJl-Y2-UpS"/>
-                                    <constraint firstItem="uqk-jw-2S8" firstAttribute="leading" secondItem="Tef-6q-g17" secondAttribute="leading" constant="46" id="PQe-jm-JUz"/>
-                                    <constraint firstItem="xWK-65-cZW" firstAttribute="leading" secondItem="Tef-6q-g17" secondAttribute="leading" constant="62" id="WSS-Jx-GZV"/>
-                                    <constraint firstItem="UoQ-zS-2wx" firstAttribute="top" secondItem="Tef-6q-g17" secondAttribute="top" constant="72" id="WjN-m7-9Fb"/>
-                                    <constraint firstItem="Tef-6q-g17" firstAttribute="trailing" secondItem="uqk-jw-2S8" secondAttribute="trailing" constant="47" id="d2W-NV-MhD"/>
-                                    <constraint firstItem="UoQ-zS-2wx" firstAttribute="leading" secondItem="Tef-6q-g17" secondAttribute="leading" constant="87" id="dil-60-wOx"/>
-                                    <constraint firstItem="Tef-6q-g17" firstAttribute="trailing" secondItem="UoQ-zS-2wx" secondAttribute="trailing" constant="88" id="iRl-bk-Wk5"/>
-                                    <constraint firstItem="uqk-jw-2S8" firstAttribute="top" secondItem="UoQ-zS-2wx" secondAttribute="bottom" constant="28" id="vkt-9R-EAL"/>
-                                    <constraint firstItem="Tef-6q-g17" firstAttribute="trailing" secondItem="xWK-65-cZW" secondAttribute="trailing" constant="63" id="yL0-Df-aFu"/>
-                                </constraints>
-                                <viewLayoutGuide key="safeArea" id="Tef-6q-g17"/>
-                            </view>
-                            <view hidden="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="EsO-7Y-XNE" userLabel="UserInfoView">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="EsO-7Y-XNE" userLabel="UserInfoView">
                                 <rect key="frame" x="0.0" y="88" width="375" height="690"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="User" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Mhx-zd-CXO">
@@ -108,9 +65,6 @@
                                         <state key="normal" title="Logout">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         </state>
-                                        <connections>
-                                            <action selector="logoutClick:" destination="r2E-lJ-fQh" eventType="touchUpInside" id="9Ku-ga-WgS"/>
-                                        </connections>
                                     </button>
                                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="User48pt" translatesAutoresizingMaskIntoConstraints="NO" id="cHW-Kd-YM2">
                                         <rect key="frame" x="87" y="72" width="200" height="200"/>
@@ -136,6 +90,46 @@
                                     <constraint firstAttribute="trailing" secondItem="cZq-W8-yll" secondAttribute="trailing" constant="63" id="zlS-lg-cDQ"/>
                                 </constraints>
                             </view>
+                            <view hidden="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="8Z2-kt-izP" userLabel="LoginView">
+                                <rect key="frame" x="0.0" y="88" width="375" height="690"/>
+                                <subviews>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="User48pt" translatesAutoresizingMaskIntoConstraints="NO" id="UoQ-zS-2wx">
+                                        <rect key="frame" x="87" y="72" width="200" height="200"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="200" id="Uh6-Ao-uCW"/>
+                                            <constraint firstAttribute="width" constant="200" id="iHF-7C-eKA"/>
+                                        </constraints>
+                                    </imageView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Login to use more features." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uqk-jw-2S8">
+                                        <rect key="frame" x="46" y="300" width="282" height="24"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="xWK-65-cZW">
+                                        <rect key="frame" x="62" y="370" width="250" height="36"/>
+                                        <color key="backgroundColor" red="0.0" green="0.97680455450000003" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                        <state key="normal" title="Login">
+                                            <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                            <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        </state>
+                                    </button>
+                                </subviews>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstItem="xWK-65-cZW" firstAttribute="top" secondItem="uqk-jw-2S8" secondAttribute="bottom" constant="46" id="EJl-Y2-UpS"/>
+                                    <constraint firstItem="uqk-jw-2S8" firstAttribute="leading" secondItem="Tef-6q-g17" secondAttribute="leading" constant="46" id="PQe-jm-JUz"/>
+                                    <constraint firstItem="xWK-65-cZW" firstAttribute="leading" secondItem="Tef-6q-g17" secondAttribute="leading" constant="62" id="WSS-Jx-GZV"/>
+                                    <constraint firstItem="UoQ-zS-2wx" firstAttribute="top" secondItem="Tef-6q-g17" secondAttribute="top" constant="72" id="WjN-m7-9Fb"/>
+                                    <constraint firstItem="Tef-6q-g17" firstAttribute="trailing" secondItem="uqk-jw-2S8" secondAttribute="trailing" constant="47" id="d2W-NV-MhD"/>
+                                    <constraint firstItem="UoQ-zS-2wx" firstAttribute="leading" secondItem="Tef-6q-g17" secondAttribute="leading" constant="87" id="dil-60-wOx"/>
+                                    <constraint firstItem="Tef-6q-g17" firstAttribute="trailing" secondItem="UoQ-zS-2wx" secondAttribute="trailing" constant="88" id="iRl-bk-Wk5"/>
+                                    <constraint firstItem="uqk-jw-2S8" firstAttribute="top" secondItem="UoQ-zS-2wx" secondAttribute="bottom" constant="28" id="vkt-9R-EAL"/>
+                                    <constraint firstItem="Tef-6q-g17" firstAttribute="trailing" secondItem="xWK-65-cZW" secondAttribute="trailing" constant="63" id="yL0-Df-aFu"/>
+                                </constraints>
+                                <viewLayoutGuide key="safeArea" id="Tef-6q-g17"/>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
@@ -152,9 +146,10 @@
                     </view>
                     <navigationItem key="navigationItem" id="fOV-LV-4g8"/>
                     <connections>
+                        <outlet property="loginButton" destination="xWK-65-cZW" id="lZN-ei-oxA"/>
                         <outlet property="loginView" destination="8Z2-kt-izP" id="lDQ-WQ-ZOg"/>
+                        <outlet property="logoutButton" destination="cZq-W8-yll" id="0ZN-O2-H15"/>
                         <outlet property="thumbnail" destination="cHW-Kd-YM2" id="qIt-0L-v8s"/>
-                        <outlet property="userInfoView" destination="EsO-7Y-XNE" id="eHZ-2f-JF3"/>
                         <outlet property="user_description" destination="DJL-rd-X6C" id="iIH-8b-snk"/>
                         <outlet property="user_id" destination="Mhx-zd-CXO" id="OgH-Dl-GID"/>
                     </connections>

@@ -7,19 +7,20 @@
 //
 
 import UIKit
-import Alamofire
-import AlamofireImage
-import SwiftyJSON
+import RxSwift
+import RxDataSources
 
-class LectureView: UITableViewController {
+class LectureView: UIViewController, UITableViewDelegate {
 
-    var swipeRefresh: UIRefreshControl!
-    var indicator: UIActivityIndicatorView!
+    @IBOutlet weak var tableView: UITableView!
     
-    var page = 0
-    var loading = false
+    let viewModel = LectureViewModel()
     
-    var article: [JSON] = []
+    var swipeRefresh = UIRefreshControl()
+    var indicator = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.whiteLarge)
+    
+    let disposeBag = DisposeBag()
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,85 +30,81 @@ class LectureView: UITableViewController {
 
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
-        self.tableView.register(UINib(nibName: "ArticleCell", bundle: nil), forCellReuseIdentifier: "Cell")
-        self.title = "Lecture"
-        swipeRefresh = UIRefreshControl()
-        swipeRefresh.addTarget(self, action: #selector(onRefresh(_:)), for: UIControl.Event.valueChanged)
-        self.tableView.addSubview(swipeRefresh)
-        indicator = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.whiteLarge)
+        self.title = "Lectures"
         indicator.center = self.view.center
-        getLectures()
+        indicator.color = .gray
+        self.tableView.register(UINib(nibName: "ArticleCell", bundle: nil), forCellReuseIdentifier: "Cell")
+        swipeRefresh.rx.controlEvent(UIControl.Event.valueChanged).subscribe({_ in
+            self.viewModel.swipeRefresh()
+        }).disposed(by: disposeBag)
+        self.tableView.addSubview(swipeRefresh)
+        let dataSource = RxTableViewSectionedAnimatedDataSource<SectionOfArticle>(configureCell: { (ds: TableViewSectionedDataSource<SectionOfArticle>, tableView: UITableView, indexPath: IndexPath, model: ArticleStruct) -> UITableViewCell in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
+            cell.setData(thumbnail: model.user.profile_image_url, user_id: model.user.id, title: model.title)
+            return cell
+        })
+        tableView.rx.setDelegate(self).disposed(by: disposeBag)
+        viewModel.lectureNotifier.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
+        Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, lecture in
+            self.tableView.deselectRow(at: indexPath, animated: true)
+            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
+            view.articleID = lecture.id
+            view.articleTitle = lecture.title
+            view.articleUrl = lecture.url
+            view.articleImage = lecture.user.profile_image_url
+            view.user_id = lecture.user.id
+            view.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(view, animated: true)
+        }.disposed(by: disposeBag)
+        tableView.rx.contentOffset.subscribe { scrollView in
+            if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
+            {   //一番下
+                self.viewModel.getLectures()
+                //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
+            }else{
+                //一番下以外
+                //@"(´・ω・`)");
+            }
+        }.disposed(by: disposeBag)
+        viewModel.showLoading.subscribe(onNext: { (showLoading) in
+            if showLoading {
+                self.indicator.startAnimating()
+            } else {
+                self.indicator.stopAnimating()
+            }
+        }).disposed(by: disposeBag)
+        viewModel.refreshing.subscribe(onNext: { (isRefreshing) in
+            self.swipeRefresh.endRefreshing()
+        }).disposed(by: disposeBag)
+        viewModel.errorNotifier.subscribe(onNext: { (error) in
+            self.showError()
+        }).disposed(by: disposeBag)
+        self.navigationController?.navigationBar.barTintColor = UIColor.green
+        viewModel.getLectures()
     }
 
     // MARK: - Table view data source
 
-    override func numberOfSections(in tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
         return 1
     }
 
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return article.count
+        return viewModel.lectures.count
     }
 
-    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 100
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
-
-        // Configure the cell...
-        cell.title.text = article[indexPath.row]["title"].string
-        cell.user.text = article[indexPath.row]["user"]["id"].string
-        Alamofire.request(article[indexPath.row]["user"]["profile_image_url"].string!).responseImage { (response) in
-            if response.result.isSuccess {
-                cell.thumbnail.image = response.value
-            } else {
-                cell.thumbnail.image = UIImage(named: "ic_image")
-            }
-        }
-        return cell
-    }
-    
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        self.tableView.deselectRow(at: indexPath, animated: true)
-        let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-        view.articleID = article[indexPath.row]["id"].string
-        view.articleTitle = article[indexPath.row]["title"].string
-        view.articleUrl = article[indexPath.row]["url"].string
-        view.articleImage = article[indexPath.row]["user"]["profile_image_url"].string
-        view.hidesBottomBarWhenPushed = true
-        self.navigationController?.pushViewController(view, animated: true)
-    }
-
-    @objc func onRefresh(_ sender: Any) {
-        if loading == false {
-            article.removeAll()
-            getLectures()
-        }
-    }
-    
-    func getLectures() {
-        indicator.startAnimating()
-        loading = true
-        page+=1
-        Alamofire.request(HOST+API.Lectures.rawValue, method: .get, parameters: ["page":page], encoding: URLEncoding.default, headers: nil).responseJSON { (response) in
-            if response.result.isSuccess {
-                let json = JSON(response.value as Any)
-                json.forEach({ (str, data) in
-                    self.article.append(data)
-                })
-                self.tableView.reloadData()
-            } else {
-                let alert = UIAlertController(title: "Error", message: "Failed to get lectures", preferredStyle: UIAlertController.Style.alert)
-                alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
-                self.present(alert, animated: true, completion: nil)
-            }
-            self.indicator.stopAnimating()
-            self.loading = false
-        }
+    func showError() {
+        let alert = UIAlertController(title: "Error", message: "Failed to get lectures."+plsCheckInternet, preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(UIAlertAction(title: "Retry", style: UIAlertAction.Style.default, handler: { (action) in
+            self.viewModel.getLectures()
+        }))
+        self.present(alert, animated: true, completion: nil)
     }
     
     /*

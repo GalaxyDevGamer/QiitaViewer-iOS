@@ -13,7 +13,7 @@ class Article: Mappable {
     var id:String?
     var title: String?
     var url:String?
-    var user: User?
+    var user: User!
     
     required convenience init?(map: Map) {
         self.init()

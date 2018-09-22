@@ -7,176 +7,120 @@
 //
 
 import UIKit
-import Alamofire
 import AlamofireImage
-import SwiftyJSON
-import ObjectMapper
-import AlamofireObjectMapper
 import RxSwift
+import RxDataSources
 
-class HomeView: UITableViewController, URLSessionDelegate {
+class HomeView: UIViewController, UITableViewDelegate{
     
-    var page = 0
-    var size = 0
+    @IBOutlet weak var tableView: UITableView!
     
-    var images: [UIImage] = []
-    var articles: [Article] = []
+    var swipeRefresh = UIRefreshControl()
     
-    var loading = false
-    var isSwipeRefresh = false
+    let profile = UIButton(type: UIButton.ButtonType.custom)
     
-    var swipeRefresh: UIRefreshControl!
-    
-    var indicator: UIActivityIndicatorView!
+    var indicator = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.whiteLarge)
     
     let disposeBag = DisposeBag()
     
+    let viewModel = HomeViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        indicator = UIActivityIndicatorView(style: UIActivityIndicatorView.Style.whiteLarge)
+        initUI()
+        swipeRefresh.rx.controlEvent(UIControl.Event.valueChanged).asDriver().drive(onNext: { _ in
+            self.viewModel.swipeRefresh()
+        }).disposed(by: disposeBag)
+        profile.rx.tap.asDriver().drive(onNext: { [unowned self] _ in
+            let view = UIStoryboard(name: "UserInfo", bundle: nil).instantiateViewController(withIdentifier: "UserInfoBoard") as! UserInfoView
+            view.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(view, animated: true)
+        }).disposed(by: disposeBag)
+        NotificationCenter.default.rx.notification(Notification.Name("updateProfileImage"), object: nil).subscribe({ (notification) in
+            self.updateProfileImage()
+        }).disposed(by: disposeBag)
+        viewModel.showLoading.subscribe(onNext: { (isLoading) in
+            if isLoading {
+                self.indicator.startAnimating()
+            } else {
+                self.indicator.stopAnimating()
+            }
+        }).disposed(by: disposeBag)
+        viewModel.endRefreshing.subscribe { _ in
+            self.swipeRefresh.endRefreshing()
+            }.disposed(by: disposeBag)
+        viewModel.notifyError.subscribe { (error) in
+            self.showError()
+            }.disposed(by: disposeBag)
+        viewModel.getArticle()
+    }
+    
+    func initUI() {
         indicator.center = self.view.center
         indicator.color = .gray
         self.view.addSubview(indicator)
-        swipeRefresh = UIRefreshControl()
-        swipeRefresh.addTarget(self, action: #selector(onRefresh(_:)), for: UIControl.Event.valueChanged)
         self.tableView.addSubview(swipeRefresh)
         self.tableView.alwaysBounceVertical = true
-        self.navigationItem.title = "Home"
         self.tableView.register(UINib(nibName: "ArticleCell", bundle: nil), forCellReuseIdentifier: "Cell")
+        let dataSource = RxTableViewSectionedAnimatedDataSource<SectionOfArticle>(configureCell: { (ds: TableViewSectionedDataSource<SectionOfArticle>, tableView: UITableView, indexPath: IndexPath, model: ArticleStruct) -> UITableViewCell in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
+            cell.setData(thumbnail: model.user.profile_image_url, user_id: model.user.id, title: model.title)
+            return cell
+        })
+        tableView.rx.setDelegate(self).disposed(by: disposeBag)
+        viewModel.articleNotify.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
+        Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, article in
+            self.tableView.deselectRow(at: indexPath, animated: true)
+            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
+            view.articleID = article.id
+            view.articleTitle = article.title
+            view.articleUrl = article.url
+            view.articleImage = article.user.profile_image_url
+            view.user_id = article.user.id
+            view.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(view, animated: true)
+            }.disposed(by: disposeBag)
+        tableView.rx.contentOffset.subscribe { contentOffset in
+            if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
+            {   //一番下
+                self.viewModel.getArticle()
+                //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
+            }else{
+                //一番下以外
+                //@"(´・ω・`)");
+            }
+            }.disposed(by: disposeBag)
         updateProfileImage()
-        getArticle()
-        NotificationCenter.default.addObserver(self, selector: #selector(updateProfileImage), name: NSNotification.Name(rawValue: "updateProfileImage"), object: nil)
+        let left = UIBarButtonItem(customView: profile)
+        left.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        left.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        self.navigationItem.leftBarButtonItem = left
+        self.navigationController?.navigationBar.barTintColor = UIColor.green
     }
     
-    func getArticle() -> Void {
-        if loading {
-            return
-        }
-        indicator.startAnimating()
-        loading = true
-        page+=1
-        //https://qiita.com/api/v2/items?per_page=%d&page=%d
-        var authorization = ["Authorization": "Bearer "]
-        if UserDefaults.standard.string(forKey: "access_token") != nil {
-            authorization = ["Authorization": "Bearer "+UserDefaults.standard.string(forKey: "access_token")!]
-        }
-        ArticleRequest.shaeredInstance.request(page: page).subscribe(onNext: { (articles) in
-            let group = DispatchGroup()
-            for article in articles {
-                group.enter()
-                DispatchQueue(label: "getData").async(group: group) {
-                    ArticleRequest.shaeredInstance.downloadImage(url: (article.user?.profile_image_url)!).subscribe(onNext: { (image) in
-                        ArticleManager.sharedInstance.images.append(image)
-                    }, onError: { (error) in
-                        ArticleManager.sharedInstance.images.append(UIImage(named: "ic_image")!)
-                    }, onCompleted: {
-                    }, onDisposed: {
-                        ArticleManager.sharedInstance.articles.append(article)
-                        group.leave()
-                    }).disposed(by: self.disposeBag)
-                }
-            }
-            group.notify(queue: .main, execute: {
-                self.tableView.reloadData()
-                self.hideLoading()
-            })
-        }, onError: { (error) in
-            let alert = UIAlertController(title: "Error", message: "Failed to get articles", preferredStyle: UIAlertController.Style.alert)
-            alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
-            self.present(alert, animated: true, completion: nil)
-            self.hideLoading()
-        }, onCompleted: {
-            
-        }) {
-
-        }.disposed(by: disposeBag)
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return viewModel.articles.count
     }
     
-    @objc func onRefresh(_ sender: Any) -> Void {
-        if !loading{
-            page = 0
-            size = 0
-            isSwipeRefresh = true
-            getArticle()
-            swipeRefresh.endRefreshing()
-        }
-    }
-    
-    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
-        {   //一番下
-            if loading == false {
-                print("scroll \(self.loading)")
-                getArticle()
-                print("load more")
-            }
-            //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
-        }else{
-            //一番下以外
-            //@"(´・ω・`)");
-        }
-    }
-    
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-        view.articleID = ArticleManager.sharedInstance.articles[indexPath.row].id
-        view.articleTitle = ArticleManager.sharedInstance.articles[indexPath.row].title
-        view.articleUrl = ArticleManager.sharedInstance.articles[indexPath.row].url
-        view.articleImage = ArticleManager.sharedInstance.articles[indexPath.row].user?.profile_image_url
-        view.user_id = ArticleManager.sharedInstance.articles[indexPath.row].user?.id
-        view.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(view, animated: true)
-    }
-    
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell") as! ArticleCell
-        cell.setData(thumbnail: ArticleManager.sharedInstance.images[indexPath.row], user_id: (ArticleManager.sharedInstance.articles[indexPath.row].user?.id)!, title: ArticleManager.sharedInstance.articles[indexPath.row].title!)
-        size+=1
-        print("attached to cell: \(self.size)")
-        return cell
-    }
-    
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return ArticleManager.sharedInstance.articles.count
-    }
-    
-    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 100
     }
     
-    @objc func userClick(_ sender: Any) {
-        let view = UIStoryboard(name: "UserInfo", bundle: nil).instantiateViewController(withIdentifier: "UserInfoBoard") as! UserInfoView
-        view.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(view, animated: true)
-    }
-    
-    @objc func updateProfileImage() {
+    func updateProfileImage() {
         if UserDefaults.standard.string(forKey: "profile_image") == nil {
-            self.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "User24pt"), style: UIBarButtonItem.Style.plain, target: self, action: #selector(userClick(_:)))
+            profile.setImage(UIImage(named: "User24pt"), for: .normal)
         } else {
-            Alamofire.request(UserDefaults.standard.string(forKey: "profile_image")!).responseImage(completionHandler: { (response) in
-                if response.result.isSuccess {
-                    let button = UIButton(type: .custom)
-                    button.setImage(UIImage(data: response.data!, scale: 3.0)?.withRenderingMode(.alwaysOriginal), for: .normal)
-                    button.addTarget(self, action: #selector(self.userClick(_:)), for: UIControl.Event.touchUpInside)
-                    let left = UIBarButtonItem(customView: button)
-                    left.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
-                    left.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
-                    self.navigationItem.leftBarButtonItem = left
-                    //                self.navigationItem.rightBarButtonItem = left
-                    //                self.profile_image.image = UIImage(data: response.data!, scale: 10.0)?.withRenderingMode(.alwaysOriginal)
-                    
-                }
-            })
+            profile.af_setImage(for: ControlState.normal, url: URL(string: UserDefaults.standard.string(forKey: "profile_image")!)!)
         }
     }
     
-    func hideLoading() {
-        self.loading = false
-        self.indicator.stopAnimating()
+    func showError() {
+        let alert = UIAlertController(title: "Error", message: "Failed to get articles."+plsCheckInternet, preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(UIAlertAction(title: "Retry", style: UIAlertAction.Style.default, handler: { (action) in
+            self.viewModel.getArticle()
+        }))
+        self.present(alert, animated: true, completion: nil)
     }
     
     override func didReceiveMemoryWarning() {

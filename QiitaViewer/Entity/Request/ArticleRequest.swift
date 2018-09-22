@@ -13,11 +13,11 @@ import AlamofireObjectMapper
 
 class ArticleRequest {
     
-    static let shaeredInstance = ArticleRequest()
+    static let shared = ArticleRequest()
     
     let disposeBag = DisposeBag()
     
-    func request(page: Int) -> Observable<[Article]>{
+    func getArticles(page: Int) -> Observable<[Article]>{
         return Observable.create({ (observer: AnyObserver<[Article]>) -> Disposable in
             Alamofire.request(HOST+API.Article.rawValue, method: .get, parameters: ["page":page], encoding: URLEncoding.default, headers: nil).responseArray(completionHandler: { (response: DataResponse<[Article]>) in
                 if response.result.isSuccess {
@@ -31,9 +31,23 @@ class ArticleRequest {
         })
     }
     
-    func getStocks(page: Int) -> Observable<[Article]> {
+    func search(page: Int, query: String) -> Observable<[Article]> {
         return Observable.create({ (observer) -> Disposable in
-            Alamofire.request(HOST+"/users/\(UserDefaults.standard.string(forKey: "id")!)/stocks", method: .get, parameters: ["page": page], encoding: URLEncoding.default, headers:nil).responseArray(completionHandler: { (response: DataResponse<[Article]>) in
+            Alamofire.request(HOST+API.Article.rawValue, method: .get, parameters: ["page":page, "query":query], encoding: URLEncoding.default, headers: nil).responseArray(completionHandler: { (response: DataResponse<[Article]>) in
+                if response.result.isSuccess {
+                    observer.onNext(response.result.value!)
+                } else {
+                    observer.onError(response.result.error!)
+                }
+                observer.onCompleted()
+            })
+            return Disposables.create()
+        })
+    }
+    
+    func getLectures(page: Int) -> Observable<[Article]> {
+        return Observable.create({ (observer) -> Disposable in
+            Alamofire.request(HOST+API.Lectures.rawValue, method: .get, parameters: ["page":page], encoding: URLEncoding.default, headers: nil).responseArray(completionHandler: { (response: DataResponse<[Article]>) in
                 if response.result.isSuccess {
                     observer.onNext(response.result.value!)
                 } else {

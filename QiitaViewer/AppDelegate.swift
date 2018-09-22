@@ -10,6 +10,7 @@ import UIKit
 import CoreData
 import Alamofire
 import SwiftyJSON
+import RxSwift
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UITabBarDelegate {
@@ -18,9 +19,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UITabBarDelegate {
     var isFavouriteModified: Bool?
     var tabBar: UITabBar!
     
+    let disposeBag = DisposeBag()
+    
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        TokenObserver.shared.addStateChangedObserver()
         return true
     }
     
@@ -32,7 +36,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UITabBarDelegate {
                 print(reponse.value as Any)
                 UserDefaults.standard.set(json["token"].string, forKey: "access_token")
                 self.getUserInfo()
+                NotificationCenter.default.post(name: NSNotification.Name("OAuth Result"), object: reponse.result.isSuccess)
             } else {
+                NotificationCenter.default.post(name: NSNotification.Name("OAuth Result"), object: reponse.result.isFailure)
                 print("Failed to get access_token")
             }
         }
@@ -40,21 +46,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UITabBarDelegate {
     }
     
     func getUserInfo() {
-        Alamofire.request("https://qiita.com/api/v2/authenticated_user", method: .get, parameters: nil, encoding: URLEncoding.default, headers: ["Authorization": "Bearer "+UserDefaults.standard.string(forKey: "access_token")!]).responseJSON { (reponse) in
-            if reponse.result.isSuccess {
-                let json = JSON(reponse.value as Any)
-                UserDefaults.standard.set(json["id"].string, forKey: "id")
-                UserDefaults.standard.set(json["description"].string, forKey: "description")
-                UserDefaults.standard.set(json["name"].string, forKey: "name")
-                UserDefaults.standard.set(json["profile_image_url"].string, forKey: "profile_image")
-                NotificationCenter.default.post(name: NSNotification.Name("showUserInfo"), object: nil)
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "loginSuccess"), object: nil)
-                NotificationCenter.default.post(name: NSNotification.Name("updateProfileImage"), object: nil)
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "UpdateStocks"), object: nil)
-            } else {
-                print("Failed to get user info")
-            }
-        }
+        UserInfoRequest.sharedInstance.getUserInfo().subscribe(onNext: { (userInfo) in
+            UserDefaults.standard.set(userInfo.id, forKey: "id")
+            UserDefaults.standard.set(userInfo.description, forKey: "description")
+            UserDefaults.standard.set(userInfo.name, forKey: "name")
+            UserDefaults.standard.set(userInfo.profile_image_url, forKey: "profile_image")
+        }, onError: { (error) in
+            print("Failed to get user info")
+        }, onCompleted: {
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "loginSuccess"), object: nil)
+            NotificationCenter.default.post(name: NSNotification.Name("updateProfileImage"), object: nil)
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "AuthorizeStateChanged"), object: nil)
+        }).disposed(by: disposeBag)
     }
     
     func applicationWillResignActive(_ application: UIApplication) {

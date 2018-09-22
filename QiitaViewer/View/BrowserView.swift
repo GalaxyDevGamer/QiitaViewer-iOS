@@ -9,7 +9,8 @@
 import UIKit
 import RealmSwift
 import WebKit
-import Alamofire
+import RxSwift
+import RxCocoa
 
 class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
     
@@ -20,50 +21,54 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
     var articleImage: String?
     var user_id: String!
     
-    var isStocked = false
-    var isLiked = false
+    let disposeBag = DisposeBag()
     
-    @IBOutlet weak var stock: UIBarButtonItem!
-    @IBOutlet weak var like: UIBarButtonItem!
+    let viewModel = BrowserViewModel()
+    
+    let stock = UIButton(type: UIButton.ButtonType.custom)
+    let like = UIButton(type: UIButton.ButtonType.custom)
+    let tag = UIButton(type: UIButton.ButtonType.custom)
+    
     @IBOutlet var webView: WKWebView!
     
     override func loadView() {
         super.loadView()
         webView.navigationDelegate = self
         webView.uiDelegate = self
-        checkStock()
-        checkLike()
+        viewModel.articleID = articleID
         if UserDefaults.standard.string(forKey: "id") == nil {
-            NotificationCenter.default.addObserver(self, selector: #selector(loginSuccess), name: NSNotification.Name("loginSuccess"), object: nil)
+            NotificationCenter.default.rx.notification(Notification.Name(rawValue: "loginSuccess"), object: nil).subscribe(onNext: { (notification) in
+                self.showDialog(title: "", message: "Login Success")
+            }).disposed(by: disposeBag)
         }
-    }
-    
-    func getAccessToken() -> String {
-        return "Bearer " + UserDefaults.standard.string(forKey: "access_token")!
-    }
-    
-    func checkStock() {
-        if UserDefaults.standard.string(forKey: "access_token") == nil {
-            return
-        }
-        Alamofire.request(HOST+"/items/\(articleID!)/stock", method: .get, parameters: nil, encoding: URLEncoding.default, headers: ["Authorization":getAccessToken()]).response { (response) in
-            if response.response?.statusCode == 204 {
-                self.stock.image = UIImage(named: "Stocked24pt")
-                self.isStocked = true
-            }
-        }
-    }
-    
-    func checkLike() {
-        if UserDefaults.standard.string(forKey: "access_token") == nil {
-            return
-        }
-        Alamofire.request(HOST+"/items/\(articleID!)/like", method: .get, parameters: nil, encoding: URLEncoding.default, headers: ["Authorization":getAccessToken()]).response { (response) in
-            if response.response?.statusCode == 204 {
-                self.like.image = UIImage(named: "Liked24pt")
-                self.isLiked = true
-            }
-        }
+        viewModel.stockImage.bind(to: stock.rx.image(for: UIControl.State.normal)).disposed(by: disposeBag)
+        viewModel.likeImage.bind(to: like.rx.image(for: UIControl.State.normal)).disposed(by: disposeBag)
+        viewModel.tagImage.bind(to: tag.rx.image(for: UIControl.State.normal)).disposed(by: disposeBag)
+        stock.rx.tap.asDriver().drive(onNext: { _ in
+            self.viewModel.stockClick()
+        }).disposed(by: disposeBag)
+        like.rx.tap.asDriver().drive(onNext: { _ in
+            self.viewModel.likeClick()
+        }).disposed(by: disposeBag)
+        tag.rx.tap.asDriver().drive(onNext: { _ in
+            self.tagClick()
+        }).disposed(by: disposeBag)
+        viewModel.loginAlert.subscribe(onNext: { (target) in
+            self.needToLogin(target: target)
+        }).disposed(by: disposeBag)
+        viewModel.resultNotify.subscribe(onNext: { (message) in
+            self.showDialog(title: "", message: message)
+        }).disposed(by: disposeBag)
+        let stockItem = UIBarButtonItem(customView: stock)
+        stockItem.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        stockItem.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        let likeItem = UIBarButtonItem(customView: like)
+        likeItem.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        likeItem.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        let tagItem = UIBarButtonItem(customView: tag)
+        tagItem.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        tagItem.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        navigationItem.rightBarButtonItems = [stockItem, likeItem, tagItem]
     }
     
     override func viewDidLoad() {
@@ -71,7 +76,11 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
         
         // Do any additional setup after loading the view.
         webView.load(URLRequest(url: URL(string: articleUrl!)!))
+        //        webView.load(URLRequest(url: URL(string: articleUrl!+"?access_token"+UserDefaults.standard.string(forKey: "access_token")!)!))
         self.navigationItem.title = articleTitle
+        self.navigationController?.navigationBar.barTintColor = UIColor.green
+        self.navigationController?.navigationBar.backItem?.backBarButtonItem?.image = UIImage(named: "Back24pt")
+        viewModel.checkStatus()
     }
     
     override func didReceiveMemoryWarning() {
@@ -79,99 +88,22 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
         // Dispose of any resources that can be recreated.
     }
     
-    @objc func loginSuccess() {
-        showDialog(title: "", message: "Login Success")
-    }
-    
-    @IBAction func stockClick(_ sender: Any) {
-        if UserDefaults.standard.string(forKey: "id") == nil {
-            needToLogin(target: "stock")
+    func tagClick() {
+        if viewModel.tags.count == 0 {
+            showDialog(title: "No tags found", message: "Add some tags on Tag Tab")
             return
         }
-        if isStocked {
-            Alamofire.request(HOST+"/items/\(articleID!)/stock", method: .delete, parameters: nil, encoding: URLEncoding.default, headers: ["Authorization":getAccessToken()]).response { (response) in
-                if response.response?.statusCode == 204 {
-                    self.stock.image = UIImage(named: "UnStocked24pt")
-                    self.isStocked = false
-                    self.showDialog(title:"", message: "UnStocked")
-                } else {
-                    self.showDialog(title: FailTitle, message: "UnStock failed.")
-                }
-            }
-        } else {
-            Alamofire.request(HOST+"/items/\(articleID!)/stock", method: .put, parameters: nil, encoding: URLEncoding.default, headers: ["Authorization":getAccessToken()]).response { (response) in
-                if response.response?.statusCode == 204 {
-                    self.stock.image = UIImage(named: "Stocked24pt")
-                    self.isStocked = true
-                    self.showDialog(title: "", message: "Stocked")
-                } else {
-                    self.showDialog(title: FailTitle, message: "Stock failed")
-                }
-            }
-        }
-    }
-    
-    @IBAction func likeClick(_ sender: Any) {
-        if UserDefaults.standard.string(forKey: "id") == nil {
-            needToLogin(target: "like")
-            return
-        }
-        if isLiked {
-            Alamofire.request(HOST+"/items/\(articleID!)/like", method: .delete, parameters: nil, encoding: URLEncoding.default, headers: ["Authorization":getAccessToken()]).response { (response) in
-                if response.response?.statusCode == 204 {
-                    self.like.image = UIImage(named: "UnLiked24pt")
-                    self.isLiked = false
-                    self.showDialog(title: "", message: "UnLiked")
-                } else {
-                    self.showDialog(title: FailTitle, message: "UnLike failed")
-                }
-            }
-        } else {
-            Alamofire.request(HOST+"/items/\(articleID!)/like", method: .put, parameters: nil, encoding: URLEncoding.default, headers: ["Authorization":getAccessToken()]).response { (response) in
-                if response.response?.statusCode == 204 {
-                    self.like.image = UIImage(named: "Liked24pt")
-                    self.isLiked = true
-                    self.showDialog(title: "", message: "Liked")
-                } else {
-                    self.showDialog(title: FailTitle, message: "Like failed")
-                }
-            }
-        }
-    }
-    
-    @IBAction func categoryClick(_ sender: Any) {
-        let realm = try! Realm()
-        if realm.objects(Category.self).count == 0 {
-            showDialog(title: "No categories found", message: "Add some categories on Category Tab")
-            return
-        }
-        let alert = UIAlertController(title: "Add to category", message: "Choose category to add", preferredStyle: UIAlertController.Style.alert)
-        for category in try! Realm().objects(Category.self) {
-            alert.addAction(UIAlertAction(title: category.name, style: UIAlertAction.Style.default, handler: { (action) in
-                let data = realm.objects(Category.self).filter("name == %@", category.name!).first
-                let article = Articles()
-                article.id = self.articleID
-                article.title = self.articleTitle
-                article.url = self.articleUrl
-                article.image = self.articleImage
-                article.user_id = self.user_id
-                let saveData = Category()
-                saveData.name = category.name
-                data?.articles.forEach({ (article) in
-                    saveData.articles.append(article)
-                })
-                saveData.articles.append(article)
-                try! realm.write {
-                    realm.add(saveData, update: true)
-                }
-                self.showDialog(title: "Success", message: "The article added to category")
+        let alert = UIAlertController(title: "Add to tag", message: "Choose tag to add", preferredStyle: UIAlertController.Style.actionSheet)
+        for tag in viewModel.tags {
+            alert.addAction(UIAlertAction(title: tag.name, style: UIAlertAction.Style.default, handler: { (action) in
+                self.viewModel.addToTag(name: tag.name!, title: self.articleTitle!, url: self.articleUrl!, image: self.articleImage!, user_id: self.user_id)
             }))
         }
         alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.default, handler: nil))
         self.present(alert, animated: true, completion: nil)
     }
     
-    @objc func showDialog(title: String, message: String) {
+    func showDialog(title: String, message: String) {
         let dialog = UIAlertController(title: title, message: message, preferredStyle: UIAlertController.Style.alert)
         self.present(dialog, animated: true, completion: nil)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -186,11 +118,11 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
         loginAlert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
         loginAlert.addAction(UIAlertAction(title: "Login", style: UIAlertAction.Style.default, handler: { (action) in
             UIApplication.shared.open(URL(string: AuthorizeURI)!, options: [:]) { (result) in
-                    if !result {
-                        let alert = UIAlertController(title: "Can`t open browser", message: "Failed to open browser", preferredStyle: UIAlertController.Style.alert)
-                        alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
-                        self.present(alert, animated: true, completion: nil)
-                    }
+                if !result {
+                    let alert = UIAlertController(title: "Can`t open browser", message: "Failed to open browser", preferredStyle: UIAlertController.Style.alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
+                    self.present(alert, animated: true, completion: nil)
+                }
             }
         }))
         self.present(loginAlert, animated: true, completion: nil)

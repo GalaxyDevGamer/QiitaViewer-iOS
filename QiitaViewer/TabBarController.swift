@@ -21,7 +21,7 @@ class TabBarController: UITabBarController, UITabBarControllerDelegate {
         let homeView: UIViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "HomeBoard")
         let homeNav = UINavigationController(rootViewController: homeView)
         array.append(homeNav)
-        let favouriteView: UIViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "CategoryBoard")
+        let favouriteView: UIViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "TagBoard")
         let favNav = UINavigationController(rootViewController: favouriteView)
         array.append(favNav)
         let searchView: UIViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "SearchBoard")

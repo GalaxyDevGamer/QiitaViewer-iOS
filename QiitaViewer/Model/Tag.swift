@@ -10,7 +10,7 @@ import UIKit
 import RealmSwift
 
 @objcMembers
-class Category: Object {
+class Tag: Object {
     dynamic var name: String?
     let articles = List<Articles>()
     

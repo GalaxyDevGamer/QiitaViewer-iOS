@@ -4,7 +4,6 @@
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -52,29 +51,8 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="aBZ-yR-WZE"/>
                     </view>
-                    <navigationItem key="navigationItem" id="OyJ-3A-bwn">
-                        <rightBarButtonItems>
-                            <barButtonItem title="Stock" image="UnStocked24pt" id="xIV-PH-UWF">
-                                <connections>
-                                    <action selector="stockClick:" destination="5Sk-IC-10h" id="5at-tL-SQf"/>
-                                </connections>
-                            </barButtonItem>
-                            <barButtonItem title="Like" image="UnLiked24pt" id="osI-HX-YCv">
-                                <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <connections>
-                                    <action selector="likeClick:" destination="5Sk-IC-10h" id="iqp-KB-O3Z"/>
-                                </connections>
-                            </barButtonItem>
-                            <barButtonItem title="Category" image="Bookmark24pt" id="m2u-1H-xg1">
-                                <connections>
-                                    <action selector="categoryClick:" destination="5Sk-IC-10h" id="Jrx-eC-bqz"/>
-                                </connections>
-                            </barButtonItem>
-                        </rightBarButtonItems>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" id="OyJ-3A-bwn"/>
                     <connections>
-                        <outlet property="like" destination="osI-HX-YCv" id="hzV-nH-InL"/>
-                        <outlet property="stock" destination="xIV-PH-UWF" id="Ybn-eS-HkT"/>
                         <outlet property="webView" destination="MgY-zf-OmC" id="1pt-Yc-8HO"/>
                     </connections>
                 </viewController>
@@ -83,9 +61,4 @@
             <point key="canvasLocation" x="-193" y="132"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="Bookmark24pt" width="24" height="24"/>
-        <image name="UnLiked24pt" width="24" height="24"/>
-        <image name="UnStocked24pt" width="24" height="24"/>
-    </resources>
 </document>
