@@ -79,7 +79,6 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
         //        webView.load(URLRequest(url: URL(string: articleUrl!+"?access_token"+UserDefaults.standard.string(forKey: "access_token")!)!))
         self.navigationItem.title = articleTitle
         self.navigationController?.navigationBar.barTintColor = UIColor.green
-        self.navigationController?.navigationBar.backItem?.backBarButtonItem?.image = UIImage(named: "Back24pt")
         viewModel.checkStatus()
     }
     

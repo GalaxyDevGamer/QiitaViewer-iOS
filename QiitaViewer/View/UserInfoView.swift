@@ -50,8 +50,7 @@ class UserInfoView: UIViewController {
                 self.indicator.stopAnimating()
             }
         }).disposed(by: disposeBag)
-        self.navigationController?.navigationBar.tintColor = UIColor.green
-        self.navigationController?.navigationBar.backItem?.backBarButtonItem?.image = UIImage(named: "Back24pt")
+        self.navigationController?.navigationBar.barTintColor = UIColor.green
     }
     
     func loadLoginView() {

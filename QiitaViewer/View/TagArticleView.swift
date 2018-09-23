@@ -53,8 +53,7 @@ class TagArticleView: UIViewController, UITableViewDelegate {
         tableView.rx.itemDeleted.subscribe (onNext: { indexPath in
             self.viewModel.removeArticle(index: indexPath.row)
         }).disposed(by: disposeBag)
-        self.navigationController?.navigationBar.tintColor = UIColor.green
-        self.navigationController?.navigationBar.backItem?.backBarButtonItem?.image = UIImage(named: "Back24pt")
+        self.navigationController?.navigationBar.barTintColor = UIColor.green
         viewModel.loadArticles()
     }
     
