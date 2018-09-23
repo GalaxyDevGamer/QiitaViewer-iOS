@@ -23,7 +23,7 @@ class UserInfoRequest {
                 if response.result.isSuccess {
                     obsever.onNext(response.result.value!)
                 } else {
-                    obsever.onError(response.result.error!)
+                    obsever.onError(response.result.error ?? "Failed to get UserInfo" as! Error)
                 }
                 obsever.onCompleted()
             })
@@ -45,7 +45,7 @@ class UserInfoRequest {
                 if response.response?.statusCode == 204 {
                     observer.onNext(true)
                 } else {
-                    observer.onError(response.error!)
+                    observer.onError(response.error ?? "Logout Failed" as! Error)
                 }
                 observer.onCompleted()
             })

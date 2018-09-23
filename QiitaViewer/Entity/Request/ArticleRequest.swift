@@ -23,7 +23,7 @@ class ArticleRequest {
                 if response.result.isSuccess {
                     observer.onNext(response.result.value!)
                 } else {
-                    observer.onError(response.result.error!)
+                    observer.onError(response.result.error ?? "Failed to get articles" as! Error)
                 }
                 observer.onCompleted()
             })
@@ -37,7 +37,7 @@ class ArticleRequest {
                 if response.result.isSuccess {
                     observer.onNext(response.result.value!)
                 } else {
-                    observer.onError(response.result.error!)
+                    observer.onError(response.result.error ?? "Failed to search" as! Error)
                 }
                 observer.onCompleted()
             })
@@ -51,7 +51,7 @@ class ArticleRequest {
                 if response.result.isSuccess {
                     observer.onNext(response.result.value!)
                 } else {
-                    observer.onError(response.result.error!)
+                    observer.onError(response.result.error ?? "Failed to get Lectures" as! Error)
                 }
                 observer.onCompleted()
             })
@@ -65,7 +65,7 @@ class ArticleRequest {
                 if response.result.isSuccess {
                     observer.onNext(response.result.value!)
                 } else {
-                    observer.onError(response.result.error!)
+                    observer.onError(response.result.error ?? "Failed to download image" as! Error)
                 }
                 observer.onCompleted()
             })

@@ -35,7 +35,7 @@ class StockRequest {
                 if response.result.isSuccess {
                     observer.onNext(response.result.value!)
                 } else {
-                    observer.onError(response.result.error!)
+                    observer.onError(response.result.error ?? "Failed to get stocks" as! Error)
                 }
                 observer.onCompleted()
             })
@@ -50,7 +50,7 @@ class StockRequest {
                     self.stockStatus.accept(false)
                     observer.onCompleted()
                 } else {
-                    observer.onError(response.error!)
+                    observer.onError(response.error ?? "UnStock Failed" as! Error)
                 }
             }
             return Disposables.create()
@@ -64,7 +64,7 @@ class StockRequest {
                     self.stockStatus.accept(true)
                     observer.onCompleted()
                 } else {
-                    observer.onError(response.error!)
+                    observer.onError(response.error ?? "Stock Failed" as! Error)
                 }
             }
             return Disposables.create()

@@ -16,7 +16,7 @@ class LikeRequest {
     
     
     func checkIsLiked(articleID: String) {
-        Alamofire.request(HOST+"/items/\(articleID)/stock", method: .get, parameters: nil, encoding: URLEncoding.default, headers: header).response { (response) in
+        Alamofire.request(HOST+"/items/\(articleID)/like", method: .get, parameters: nil, encoding: URLEncoding.default, headers: header).response { (response) in
             if response.response?.statusCode == 204 {
                 self.isLiked.accept(true)
             } else {
@@ -31,12 +31,12 @@ class LikeRequest {
     
     func unLike(articleID: String) -> Observable<Bool> {
         return Observable.create({ (observer) -> Disposable in
-            Alamofire.request(HOST+"/items/\(articleID)/stock", method: .delete, parameters: nil, encoding: URLEncoding.default, headers: header).response { (response) in
+            Alamofire.request(HOST+"/items/\(articleID)/like", method: .delete, parameters: nil, encoding: URLEncoding.default, headers: header).response { (response) in
                 if response.response?.statusCode == 204 {
                     self.isLiked.accept(false)
                     observer.onCompleted()
                 } else {
-                    observer.onError(response.error!)
+                    observer.onError(response.error ?? "UnLike Failed" as! Error)
                 }
             }
             return Disposables.create()
@@ -45,12 +45,12 @@ class LikeRequest {
     
     func like(articleID: String) -> Observable<Bool> {
         return Observable.create({ (observer) -> Disposable in
-            Alamofire.request(HOST+"/items/\(articleID)/stock", method: .put, parameters: nil, encoding: URLEncoding.default, headers: header).response { (response) in
+            Alamofire.request(HOST+"/items/\(articleID)/like", method: .put, parameters: nil, encoding: URLEncoding.default, headers: header).response { (response) in
                 if response.response?.statusCode == 204 {
                     self.isLiked.accept(true)
                     observer.onCompleted()
                 } else {
-                    observer.onError(response.error!)
+                    observer.onError(response.error ?? "Like Failed" as! Error)
                 }
             }
             return Disposables.create()

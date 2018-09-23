@@ -49,7 +49,7 @@ class BrowserViewModel {
     }
     
     func checkIsLiked() {
-        Alamofire.request(HOST+"/items/\(articleID!)/stock", method: .get, parameters: nil, encoding: URLEncoding.default, headers: header).response { (response) in
+        Alamofire.request(HOST+"/items/\(articleID!)/like", method: .get, parameters: nil, encoding: URLEncoding.default, headers: header).response { (response) in
             if response.response?.statusCode == 204 {
                 self.isLiked = true
                 self.likeImage.accept(UIImage(named: "Liked24pt")!)
@@ -66,6 +66,7 @@ class BrowserViewModel {
             StockRequest.shared.unStock(articleID: articleID!).subscribe(onError: { (error) in
                 self.resultNotify.accept("UnStock Failed")
             }, onCompleted: {
+                self.isStocked = false
                 self.stockImage.accept(UIImage(named: "UnStocked24pt")!)
                 self.resultNotify.accept("UnStocked")
             }).disposed(by: disposeBag)
@@ -73,6 +74,7 @@ class BrowserViewModel {
             StockRequest.shared.stock(articleID: articleID!).subscribe(onError: { (error) in
                 self.resultNotify.accept("Stock Failed")
             }, onCompleted: {
+                self.isStocked = true
                 self.stockImage.accept(UIImage(named: "Stocked24pt")!)
                 self.resultNotify.accept("Stocked")
             }).disposed(by: disposeBag)
@@ -88,6 +90,7 @@ class BrowserViewModel {
             LikeRequest.shared.unLike(articleID: articleID!).subscribe(onError: { (error) in
                 self.resultNotify.accept("UnLike Failed")
             }, onCompleted: {
+                self.isLiked = false
                 self.resultNotify.accept("UnLiked")
                 self.likeImage.accept(UIImage(named: "UnLiked24pt")!)
             }).disposed(by: disposeBag)
@@ -95,6 +98,7 @@ class BrowserViewModel {
             LikeRequest.shared.like(articleID: articleID!).subscribe(onError: { (error) in
                 self.resultNotify.accept("Like Failed")
             }, onCompleted: {
+                self.isLiked = true
                 self.resultNotify.accept("Liked")
                 self.likeImage.accept(UIImage(named: "Liked24pt")!)
             }).disposed(by: disposeBag)
