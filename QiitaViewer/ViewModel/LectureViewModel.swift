@@ -36,7 +36,7 @@ class LectureViewModel {
         page+=1
         ArticleRequest.shared.getLectures(page: page).subscribe(onNext: { (lectures) in
             for lecture in lectures {
-                self.lectures.append(ArticleStruct(id: lecture.id!, title: lecture.title!, url: lecture.url!, user: UserStruct(id: lecture.user.id!, profile_image_url: lecture.user.profile_image_url!)))
+                self.lectures.append(ArticleStruct(id: lecture.id!, title: lecture.title!, url: lecture.url!, likes: lecture.likes, user: UserStruct(id: lecture.user.id!, profile_image_url: lecture.user.profile_image_url!)))
             }
             self.lectureNotifier.accept([SectionOfArticle(header: "", items: self.lectures)])
         }, onError: { (error) in
@@ -58,7 +58,7 @@ class LectureViewModel {
         ArticleRequest.shared.getLectures(page: 1).subscribe(onNext: { (lectures) in
             self.lectures.removeAll()
             for lecture in lectures {
-                self.lectures.append(ArticleStruct(id: lecture.id!, title: lecture.title!, url: lecture.url!, user: UserStruct(id: lecture.user.id!, profile_image_url: lecture.user.profile_image_url!)))
+                self.lectures.append(ArticleStruct(id: lecture.id!, title: lecture.title!, url: lecture.url!, likes: lecture.likes, user: UserStruct(id: lecture.user.id!, profile_image_url: lecture.user.profile_image_url!)))
             }
             self.lectureNotifier.accept([SectionOfArticle(header: "", items: self.lectures)])
         }, onError: { (error) in

@@ -7,10 +7,8 @@
 //
 
 import UIKit
-import RealmSwift
 import WebKit
 import RxSwift
-import RxCocoa
 
 class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
     

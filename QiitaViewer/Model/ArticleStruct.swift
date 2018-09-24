@@ -12,6 +12,7 @@ struct ArticleStruct {
     var id: String
     var title: String
     var url:String
+    var likes: Int
     var user: UserStruct
 }
 struct UserStruct {
@@ -27,6 +28,6 @@ extension ArticleStruct: IdentifiableType, Equatable {
     }
     
     static func == (lhs: ArticleStruct, rhs: ArticleStruct) -> Bool {
-        return lhs.id == rhs.id && lhs.title == rhs.title && lhs.url == rhs.url && lhs.user.id == rhs.user.id && lhs.user.profile_image_url == rhs.user.profile_image_url
+        return lhs.id == rhs.id && lhs.title == rhs.title && lhs.url == rhs.url && lhs.likes == rhs.likes && lhs.user.id == rhs.user.id && lhs.user.profile_image_url == rhs.user.profile_image_url
     }
 }

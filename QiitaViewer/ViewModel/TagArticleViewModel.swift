@@ -23,7 +23,7 @@ class TagArticleViewModel {
     
     func loadArticles() {
         try! Realm().objects(Tag.self).filter("name = %@", name).first!.articles.forEach { (article) in
-            self.articles.append(TagArticleStruct(id: article.id!, title: article.title!, url: article.url!, profile_image_url: article.image!, user_id: article.user_id))
+            self.articles.append(TagArticleStruct(id: article.id!, title: article.title!, url: article.url!, profile_image_url: article.profile_image_url!, user_id: article.user_id))
             self.tag.articles.append(article)
         }
         articleNotifier.accept([SectionOfTagArticle(header: "", items: articles)])

@@ -40,7 +40,7 @@ class LectureView: UIViewController, UITableViewDelegate {
         self.tableView.addSubview(swipeRefresh)
         let dataSource = RxTableViewSectionedAnimatedDataSource<SectionOfArticle>(configureCell: { (ds: TableViewSectionedDataSource<SectionOfArticle>, tableView: UITableView, indexPath: IndexPath, model: ArticleStruct) -> UITableViewCell in
             let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
-            cell.setData(thumbnail: model.user.profile_image_url, user_id: model.user.id, title: model.title)
+            cell.setData(thumbnail: model.user.profile_image_url, user_id: model.user.id, title: model.title, likes: 0)
             return cell
         })
         tableView.rx.setDelegate(self).disposed(by: disposeBag)
@@ -96,7 +96,7 @@ class LectureView: UIViewController, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 100
+        return cellHeight
     }
     
     func showError() {

@@ -34,11 +34,13 @@ class HomeViewModel {
         showLoading.accept(true)
         loading = true
         page+=1
+        print("current page:\(page)")
         //https://qiita.com/api/v2/items?per_page=%d&page=%d
         ArticleRequest.shared.getArticles(page: page).subscribe(onNext: { (articles) in
             for article in articles {
-                self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
+                self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, likes: article.likes, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
             }
+            print("onNext: \(self.page)")
             self.articleNotify.accept([SectionOfArticle(header: "", items: self.articles)])
         }, onError: { (error) in
             self.notifyError.accept(error)
@@ -53,11 +55,11 @@ class HomeViewModel {
             return
         }
         loading = true
-        page = 0
+        page = 1
         ArticleRequest.shared.getArticles(page: 1).subscribe(onNext: { (articles) in
             self.articles.removeAll()
             for article in articles {
-                self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
+                self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, likes: article.likes, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
             }
             self.articleNotify.accept([SectionOfArticle(header: "", items: self.articles)])
         }, onError: { (error) in

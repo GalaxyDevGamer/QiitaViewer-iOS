@@ -36,7 +36,7 @@ class StockViewModel {
         page+=1
         StockRequest.shared.getStocks(page: page).subscribe(onNext: { (stocks) in
             for stock in stocks {
-                self.stocks.append(ArticleStruct(id: stock.id!, title: stock.title!, url: stock.url!, user: UserStruct(id: stock.user.id!, profile_image_url: stock.user.profile_image_url!)))
+                self.stocks.append(ArticleStruct(id: stock.id!, title: stock.title!, url: stock.url!, likes: stock.likes, user: UserStruct(id: stock.user.id!, profile_image_url: stock.user.profile_image_url!)))
             }
             self.stockNotify.accept([SectionOfArticle(header: "", items: self.stocks)])
         }, onError: { (error) in
@@ -57,11 +57,11 @@ class StockViewModel {
             return
         }
         loading = true
-        page = 0
+        page = 1
         StockRequest.shared.getStocks(page: 1).subscribe(onNext: { (stocks) in
             self.stocks.removeAll()
             for stock in stocks {
-                self.stocks.append(ArticleStruct(id: stock.id!, title: stock.title!, url: stock.url!, user: UserStruct(id: stock.user.id!, profile_image_url: stock.user.profile_image_url!)))
+                self.stocks.append(ArticleStruct(id: stock.id!, title: stock.title!, url: stock.url!, likes: stock.likes, user: UserStruct(id: stock.user.id!, profile_image_url: stock.user.profile_image_url!)))
             }
             self.stockNotify.accept([SectionOfArticle(header: "", items: self.stocks)])
         }, onError: { (error) in

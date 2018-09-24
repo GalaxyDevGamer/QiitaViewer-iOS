@@ -14,6 +14,8 @@ class ArticleCell: UITableViewCell {
     @IBOutlet weak var thumbnail: UIImageView!
     @IBOutlet weak var user: UILabel!
     @IBOutlet weak var title: UITextView!
+    @IBOutlet weak var likeButton: UIButton!
+    @IBOutlet weak var likes: UILabel!
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -26,9 +28,10 @@ class ArticleCell: UITableViewCell {
         // Configure the view for the selected state
     }
     
-    func setData(thumbnail:String, user_id: String, title:String) {
+    func setData(thumbnail:String, user_id: String, title:String, likes: Int) {
         self.thumbnail.af_setImage(withURL: URL(string: thumbnail)!)
         self.user.text = user_id
         self.title.text = title
+        self.likes.text = String(likes)
     }
 }

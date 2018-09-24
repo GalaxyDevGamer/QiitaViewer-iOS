@@ -112,7 +112,7 @@ class BrowserViewModel {
         article.id = self.articleID
         article.title = title
         article.url = url
-        article.image = image
+        article.profile_image_url = image
         article.user_id = user_id
         let saveData = Tag()
         saveData.name = name

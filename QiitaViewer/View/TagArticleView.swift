@@ -34,7 +34,7 @@ class TagArticleView: UIViewController, UITableViewDelegate {
         tableView.rx.setDelegate(self).disposed(by: disposeBag)
         dataSource = RxTableViewSectionedAnimatedDataSource<SectionOfTagArticle>.init(configureCell: { (ds: TableViewSectionedDataSource<SectionOfTagArticle>, tableView: UITableView, indexPath: IndexPath, model: TagArticleStruct) -> UITableViewCell in
             let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! ArticleCell
-            cell.setData(thumbnail: model.profile_image_url, user_id: model.user_id, title: model.title)
+            cell.setData(thumbnail: model.profile_image_url, user_id: model.user_id, title: model.title, likes: 0)
             return cell
         })
         dataSource.canEditRowAtIndexPath = {_,_  in true}
@@ -67,7 +67,7 @@ class TagArticleView: UIViewController, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 100
+        return cellHeight
     }
     
     /*

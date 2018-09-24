@@ -50,9 +50,10 @@ class SearchViewModel {
         clearResult()
         page = 1
         loading = true
+        self.query = query
         ArticleRequest.shared.search(page: page, query: query).subscribe(onNext: { (results) in
             for result in results {
-                self.results.append(ArticleStruct(id: result.id!, title: result.title!, url: result.url!, user: UserStruct(id: result.user.id!, profile_image_url: result.user.profile_image_url!)))
+                self.results.append(ArticleStruct(id: result.id!, title: result.title!, url: result.url!, likes: result.likes, user: UserStruct(id: result.user.id!, profile_image_url: result.user.profile_image_url!)))
             }
             self.resultNotifier.accept([SectionOfArticle(header: "", items: self.results)])
         }, onError: { (error) in
@@ -72,7 +73,7 @@ class SearchViewModel {
         loading = true
         ArticleRequest.shared.search(page: page, query: query).subscribe(onNext: { (results) in
             for result in results {
-                self.results.append(ArticleStruct(id: result.id!, title: result.title!, url: result.url!, user: UserStruct(id: result.user.id!, profile_image_url: result.user.profile_image_url!)))
+                self.results.append(ArticleStruct(id: result.id!, title: result.title!, url: result.url!, likes: result.likes, user: UserStruct(id: result.user.id!, profile_image_url: result.user.profile_image_url!)))
             }
             self.resultNotifier.accept([SectionOfArticle(header: "", items: self.results)])
         }, onError: { (error) in
