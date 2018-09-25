@@ -40,7 +40,6 @@ class HomeViewModel {
             for article in articles {
                 self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, likes: article.likes, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
             }
-            print("onNext: \(self.page)")
             self.articleNotify.accept([SectionOfArticle(header: "", items: self.articles)])
         }, onError: { (error) in
             self.notifyError.accept(error)

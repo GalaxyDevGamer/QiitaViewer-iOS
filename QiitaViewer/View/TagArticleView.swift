@@ -47,8 +47,7 @@ class TagArticleView: UIViewController, UITableViewDelegate {
             view.articleUrl = article.url
             view.articleImage = article.profile_image_url
             view.user_id = article.user_id
-            view.hidesBottomBarWhenPushed = true
-            self.navigationController?.pushViewController(view, animated: true)
+            self.present(view, animated: true, completion: nil)
             }.disposed(by: disposeBag)
         tableView.rx.itemDeleted.subscribe (onNext: { indexPath in
             self.viewModel.removeArticle(index: indexPath.row)

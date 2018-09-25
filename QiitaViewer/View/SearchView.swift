@@ -50,8 +50,7 @@ class SearchView: UIViewController, UITableViewDelegate {
             view.articleUrl = result.url
             view.articleImage = result.user.profile_image_url
             view.user_id = result.user.id
-            view.hidesBottomBarWhenPushed = true
-            self.navigationController?.pushViewController(view, animated: true)
+            self.present(view, animated: true, completion: nil)
             }.disposed(by: disposeBag)
         tableView.rx.contentOffset.subscribe { scrollView in
             if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)

@@ -26,8 +26,16 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
     let stock = UIButton(type: UIButton.ButtonType.custom)
     let like = UIButton(type: UIButton.ButtonType.custom)
     let tag = UIButton(type: UIButton.ButtonType.custom)
+    let back = UIButton(type: UIButton.ButtonType.custom)
+    let forward = UIButton(type: UIButton.ButtonType.custom)
+    let reload = UIButton(type: UIButton.ButtonType.custom)
+    let close = UIButton(type: UIButton.ButtonType.custom)
+    
     
     @IBOutlet var webView: WKWebView!
+    @IBOutlet weak var toolbar: UIToolbar!
+    @IBOutlet weak var topBar: UINavigationBar!
+    @IBOutlet weak var navigationMenu: UINavigationItem!
     
     override func loadView() {
         super.loadView()
@@ -66,7 +74,31 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
         let tagItem = UIBarButtonItem(customView: tag)
         tagItem.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
         tagItem.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
-        navigationItem.rightBarButtonItems = [stockItem, likeItem, tagItem]
+        close.setImage(UIImage(named: "Close36pt"), for: UIControl.State.normal)
+        close.rx.tap.asDriver().drive(onNext: { (_) in
+            self.dismiss(animated: true, completion: nil)
+        }).disposed(by: disposeBag)
+        let closeItem = UIBarButtonItem(customView: close)
+        navigationMenu.leftBarButtonItem = closeItem
+        navigationMenu.rightBarButtonItems = [stockItem, likeItem, tagItem]
+        back.setImage(UIImage(named: "Back24pt"), for: UIControl.State.normal)
+        back.rx.tap.asDriver().drive(onNext: { (_) in
+            if self.webView.canGoBack {
+                self.webView.goBack()
+            }
+        }).disposed(by: disposeBag)
+        forward.setImage(UIImage(named: "Forward24pt"), for: UIControl.State.normal)
+        forward.rx.tap.asDriver().drive(onNext: { (_) in
+            if self.webView.canGoForward {
+                self.webView.goForward()
+            }
+        }).disposed(by: disposeBag)
+        reload.setImage(UIImage(named: "Refresh24pt"), for: UIControl.State.normal)
+        reload.rx.tap.asDriver().drive(onNext: { (_) in
+            self.webView.reload()
+        }).disposed(by: disposeBag)
+        let spacer = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.flexibleSpace, target: nil, action: nil)
+        toolbar.items = [UIBarButtonItem(customView: back), spacer, UIBarButtonItem(customView: forward), spacer, spacer, UIBarButtonItem(customView: reload)]
     }
     
     override func viewDidLoad() {
@@ -75,14 +107,21 @@ class BrowserView: UIViewController, WKNavigationDelegate, WKUIDelegate {
         // Do any additional setup after loading the view.
         webView.load(URLRequest(url: URL(string: articleUrl!)!))
         //        webView.load(URLRequest(url: URL(string: articleUrl!+"?access_token"+UserDefaults.standard.string(forKey: "access_token")!)!))
-        self.navigationItem.title = articleTitle
-        self.navigationController?.navigationBar.barTintColor = UIColor.green
+        topBar.barTintColor = UIColor.green
+        toolbar.barTintColor = UIColor.green
         viewModel.checkStatus()
     }
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        self.navigationMenu.title = webView.title
+        stock.isEnabled = articleUrl == webView.url?.absoluteString ? true : false
+        like.isEnabled = articleUrl == webView.url?.absoluteString ? true : false
+        tag.isEnabled = articleUrl == webView.url?.absoluteString ? true : false
     }
     
     func tagClick() {
