@@ -48,18 +48,44 @@
                                     </tableViewCell>
                                 </prototypes>
                             </tableView>
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="T7U-oa-tJK">
+                                <rect key="frame" x="0.0" y="88" width="375" height="641"/>
+                                <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="9we-eW-wSL">
+                                    <size key="itemSize" width="50" height="50"/>
+                                    <size key="headerReferenceSize" width="0.0" height="0.0"/>
+                                    <size key="footerReferenceSize" width="0.0" height="0.0"/>
+                                    <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+                                </collectionViewFlowLayout>
+                                <cells>
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="Cell" id="oIe-5G-Dyn" customClass="ArticleCollectionCell" customModule="QiitaViewer" customModuleProvider="target">
+                                        <rect key="frame" x="0.0" y="0.0" width="150" height="150"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO">
+                                            <rect key="frame" x="0.0" y="0.0" width="150" height="150"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </view>
+                                        <size key="customSize" width="150" height="150"/>
+                                    </collectionViewCell>
+                                </cells>
+                            </collectionView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="7Gt-NF-xAi" firstAttribute="leading" secondItem="H9S-Lh-eqq" secondAttribute="leading" id="0Pq-N7-wN2"/>
                             <constraint firstItem="H9S-Lh-eqq" firstAttribute="bottom" secondItem="7Gt-NF-xAi" secondAttribute="bottom" id="1pw-iM-LYO"/>
                             <constraint firstItem="H9S-Lh-eqq" firstAttribute="trailing" secondItem="7Gt-NF-xAi" secondAttribute="trailing" id="64i-YC-rQt"/>
+                            <constraint firstItem="H9S-Lh-eqq" firstAttribute="bottom" secondItem="T7U-oa-tJK" secondAttribute="bottom" id="6RH-ic-dgf"/>
+                            <constraint firstItem="T7U-oa-tJK" firstAttribute="top" secondItem="H9S-Lh-eqq" secondAttribute="top" id="A2V-e4-ctz"/>
+                            <constraint firstItem="T7U-oa-tJK" firstAttribute="trailing" secondItem="H9S-Lh-eqq" secondAttribute="trailing" id="B9M-bU-qzx"/>
+                            <constraint firstItem="T7U-oa-tJK" firstAttribute="leading" secondItem="H9S-Lh-eqq" secondAttribute="leading" id="Jr0-hr-hAR"/>
                             <constraint firstItem="7Gt-NF-xAi" firstAttribute="top" secondItem="H9S-Lh-eqq" secondAttribute="top" id="gTB-6l-akc"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="H9S-Lh-eqq"/>
                     </view>
                     <navigationItem key="navigationItem" title="Home" id="9CY-Ev-Imr"/>
                     <connections>
+                        <outlet property="collectionView" destination="T7U-oa-tJK" id="iwP-6K-jtF"/>
                         <outlet property="tableView" destination="7Gt-NF-xAi" id="TyE-4Z-fWT"/>
                     </connections>
                 </viewController>
@@ -391,10 +417,10 @@ not stocking any articles yet.</string>
         </scene>
     </scenes>
     <resources>
-        <image name="Book24pt" width="24" height="24"/>
-        <image name="Bookmark24pt" width="24" height="24"/>
-        <image name="Stocked24pt" width="24" height="24"/>
-        <image name="ic_list" width="24" height="24"/>
-        <image name="ic_search" width="24" height="24"/>
+        <image name="Book24pt" width="72" height="72"/>
+        <image name="Bookmark24pt" width="72" height="72"/>
+        <image name="Stocked24pt" width="72" height="72"/>
+        <image name="ic_list" width="72" height="72"/>
+        <image name="ic_search" width="72" height="72"/>
     </resources>
 </document>

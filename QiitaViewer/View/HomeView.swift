@@ -11,9 +11,10 @@ import AlamofireImage
 import RxSwift
 import RxDataSources
 
-class HomeView: UIViewController, UITableViewDelegate{
+class HomeView: UIViewController, UITableViewDelegate, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout{
     
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var collectionView: UICollectionView!
     
     var swipeRefresh = UIRefreshControl()
     
@@ -89,12 +90,60 @@ class HomeView: UIViewController, UITableViewDelegate{
                 //一番下以外
                 //@"(´・ω・`)");
             }
+        }.disposed(by: disposeBag)
+        collectionView.addSubview(swipeRefresh)
+        collectionView.rx.setDelegate(self).disposed(by: disposeBag)
+        collectionView.register(UINib(nibName: "ArticleCollectionCell", bundle: nil), forCellWithReuseIdentifier: "Cell")
+        collectionView.rx.contentOffset.subscribe { contentOffset in
+            if(self.collectionView.contentOffset.y >= (self.collectionView.contentSize.height - self.collectionView.bounds.size.height)-10)
+            {   //一番下
+                self.viewModel.getArticle()
+                //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
+            }else{
+                //一番下以外
+                //@"(´・ω・`)");
+            }
+        }.disposed(by: disposeBag)
+        let collectionDataSource = RxCollectionViewSectionedReloadDataSource<SectionOfArticle>(configureCell: { (ds: CollectionViewSectionedDataSource<SectionOfArticle>, collectionView: UICollectionView, indexPath: IndexPath, model: ArticleStruct) -> UICollectionViewCell in
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! ArticleCollectionCell
+            cell.setData(thumbnail: model.user.profile_image_url, userName: model.user.id, title: model.title, likes: model.likes)
+            return cell
+        })
+        viewModel.articleNotify.bind(to: collectionView.rx.items(dataSource: collectionDataSource)).disposed(by: disposeBag)
+        Observable.zip(collectionView.rx.itemSelected, collectionView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, article in
+            self.tableView.deselectRow(at: indexPath, animated: true)
+            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
+            view.articleID = article.id
+            view.articleTitle = article.title
+            view.articleUrl = article.url
+            view.articleImage = article.user.profile_image_url
+            view.user_id = article.user.id
+            self.present(view, animated: true, completion: nil)
             }.disposed(by: disposeBag)
         updateProfileImage()
         let left = UIBarButtonItem(customView: profile)
         left.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
         left.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
         self.navigationItem.leftBarButtonItem = left
+        let list = UIButton(type: UIButton.ButtonType.custom)
+        list.setImage(UIImage(named: "List24pt"), for: UIControl.State.normal)
+        list.rx.tap.asDriver().drive(onNext: { (_) in
+            self.tableView.isHidden = false
+            self.collectionView.isHidden = true
+        }).disposed(by: disposeBag)
+        let collection = UIButton(type: UIButton.ButtonType.custom)
+        collection.setImage(UIImage(named: "CollectionMode24pt"), for: UIControl.State.normal)
+        collection.rx.tap.asDriver().drive(onNext: { (_) in
+            self.tableView.isHidden = true
+            self.collectionView.isHidden = false
+        }).disposed(by: disposeBag)
+        let listItem = UIBarButtonItem(customView: list)
+        listItem.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        listItem.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        let collectionItem = UIBarButtonItem(customView: collection)
+        collectionItem.customView?.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        collectionItem.customView?.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        self.navigationItem.rightBarButtonItems = [listItem, collectionItem]
         self.navigationController?.navigationBar.barTintColor = UIColor.green
     }
     
@@ -104,6 +153,10 @@ class HomeView: UIViewController, UITableViewDelegate{
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return cellHeight
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: self.view.frame.size.width/2-5, height: 200)
     }
     
     func updateProfileImage() {
