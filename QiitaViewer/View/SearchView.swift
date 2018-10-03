@@ -41,7 +41,7 @@ class SearchView: UIViewController, UITableViewDelegate {
             return cell
         })
         tableView.rx.setDelegate(self).disposed(by: disposeBag)
-        viewModel.resultNotifier.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
+        viewModel.resultProvider.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
         Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, result in
             self.tableView.deselectRow(at: indexPath, animated: true)
             let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
@@ -56,7 +56,15 @@ class SearchView: UIViewController, UITableViewDelegate {
             if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
             {   //一番下
                 if self.viewModel.results.count > 0 {
-                    self.viewModel.loadMore()
+                    self.indicator.startAnimating()
+                    self.viewModel.loadMore().subscribe(onNext: { (data) in
+                        
+                    }, onError: { (error) in
+                        self.indicator.stopAnimating()
+                        self.showError()
+                    }, onCompleted: {
+                        self.indicator.stopAnimating()
+                    }).disposed(by: self.disposeBag)
                 }
                 //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
             }else{
@@ -64,16 +72,9 @@ class SearchView: UIViewController, UITableViewDelegate {
                 //@"(´・ω・`)");
             }
         }.disposed(by: disposeBag)
-        viewModel.showLoading.subscribe(onNext: { (isLoading) in
-            if isLoading {
-                self.indicator.startAnimating()
-            } else {
-                self.indicator.stopAnimating()
-            }
-        }).disposed(by: disposeBag)
         searchBar.rx.searchButtonClicked.subscribe { bar in
             self.searchBar.resignFirstResponder()
-            self.viewModel.searchArticles(query: self.searchBar.text!)
+            self.searchArticles()
             self.viewModel.addToHistory(text: self.searchBar.text!)
         }.disposed(by: disposeBag)
         searchBar.rx.cancelButtonClicked.subscribe { bar in
@@ -96,7 +97,7 @@ class SearchView: UIViewController, UITableViewDelegate {
         tableView.deselectRow(at: indexPath, animated: true)
         if viewModel.results.count == 0 {
             searchBar.text = viewModel.history[indexPath.row].word
-            viewModel.searchArticles(query: searchBar.text!)
+            searchArticles()
         }
     }
     
@@ -115,11 +116,22 @@ class SearchView: UIViewController, UITableViewDelegate {
     func showError() {
         let alert = UIAlertController(title: "Error", message: "Failed to search articles."+plsCheckInternet, preferredStyle: UIAlertController.Style.alert)
         alert.addAction(UIAlertAction(title: "Retry", style: UIAlertAction.Style.default, handler: { (action) in
-            self.viewModel.searchArticles(query: self.searchBar.text!)
+            self.searchArticles()
         }))
         self.present(alert, animated: true, completion: nil)
     }
     
+    func searchArticles() {
+        indicator.startAnimating()
+        viewModel.searchArticles(query: self.searchBar.text!).subscribe(onNext: { (data) in
+            
+        }, onError: { (error) in
+            self.indicator.stopAnimating()
+            self.showError()
+        }, onCompleted: {
+            self.indicator.stopAnimating()
+        }).disposed(by: disposeBag)
+    }
     /*
      // MARK: - Navigation
      

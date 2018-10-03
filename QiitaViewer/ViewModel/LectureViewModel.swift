@@ -17,57 +17,52 @@ class LectureViewModel {
     
     var lectures: [ArticleStruct] = []
     
-    var lectureNotifier = PublishRelay<[SectionOfArticle]>()
-    
-    let showLoading = PublishRelay<Bool>()
-    
-    let refreshing = PublishRelay<Bool>()
-    
-    let errorNotifier = PublishRelay<Error>()
+    var lectureProvider = PublishRelay<[SectionOfArticle]>()
     
     let disposeBag = DisposeBag()
     
-    func getLectures() {
-        if loading {
-            return
-        }
-        showLoading.accept(true)
-        loading = true
-        page+=1
-        ArticleRequest.shared.getLectures(page: page).subscribe(onNext: { (lectures) in
-            for lecture in lectures {
-                self.lectures.append(ArticleStruct(id: lecture.id!, title: lecture.title!, url: lecture.url!, likes: lecture.likes, user: UserStruct(id: lecture.user.id!, profile_image_url: lecture.user.profile_image_url!)))
+    func getLectures() -> Observable<[SectionOfArticle]>{
+        return Observable.create { (observer) -> Disposable in
+            if !self.loading {
+                self.loading = true
+                self.page+=1
+                ArticleRequest.shared.getLectures(page: self.page).subscribe(onNext: { (lectures) in
+                    for lecture in lectures {
+                        self.lectures.append(ArticleStruct(id: lecture.id!, title: lecture.title!, url: lecture.url!, likes: lecture.likes, user: UserStruct(id: lecture.user.id!, profile_image_url: lecture.user.profile_image_url!)))
+                    }
+                    self.lectureProvider.accept([SectionOfArticle(header: "", items: self.lectures)])
+                }, onError: { (error) in
+                    observer.onError(error)
+                    self.loading = false
+                }, onCompleted: {
+                    observer.onCompleted()
+                    self.loading = false
+                }).disposed(by: self.disposeBag)
             }
-            self.lectureNotifier.accept([SectionOfArticle(header: "", items: self.lectures)])
-        }, onError: { (error) in
-            self.errorNotifier.accept(error)
-            self.showLoading.accept(false)
-            self.loading = false
-        }, onCompleted: {
-            self.showLoading.accept(false)
-            self.loading = false
-        }).disposed(by: disposeBag)
+            return Disposables.create()
+        }
     }
     
-    func swipeRefresh() {
-        if loading {
-            return
-        }
-        loading = true
-        page = 1
-        ArticleRequest.shared.getLectures(page: 1).subscribe(onNext: { (lectures) in
-            self.lectures.removeAll()
-            for lecture in lectures {
-                self.lectures.append(ArticleStruct(id: lecture.id!, title: lecture.title!, url: lecture.url!, likes: lecture.likes, user: UserStruct(id: lecture.user.id!, profile_image_url: lecture.user.profile_image_url!)))
+    func swipeRefresh() -> Observable<[SectionOfArticle]>{
+        return Observable.create { (observer) -> Disposable in
+            if !self.loading {
+                self.loading = true
+                self.page=1
+                ArticleRequest.shared.getLectures(page: self.page).subscribe(onNext: { (lectures) in
+                    self.lectures.removeAll()
+                    for lecture in lectures {
+                        self.lectures.append(ArticleStruct(id: lecture.id!, title: lecture.title!, url: lecture.url!, likes: lecture.likes, user: UserStruct(id: lecture.user.id!, profile_image_url: lecture.user.profile_image_url!)))
+                    }
+                    self.lectureProvider.accept([SectionOfArticle(header: "", items: self.lectures)])
+                }, onError: { (error) in
+                    observer.onError(error)
+                    self.loading = false
+                }, onCompleted: {
+                    observer.onCompleted()
+                    self.loading = false
+                }).disposed(by: self.disposeBag)
             }
-            self.lectureNotifier.accept([SectionOfArticle(header: "", items: self.lectures)])
-        }, onError: { (error) in
-            self.errorNotifier.accept(error)
-            self.loading = false
-            self.refreshing.accept(true)
-        }, onCompleted: {
-            self.loading = false
-            self.refreshing.accept(true)
-        }).disposed(by: disposeBag)
+            return Disposables.create()
+        }
     }
 }

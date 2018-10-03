@@ -21,7 +21,6 @@ class LectureView: UIViewController, UITableViewDelegate {
     
     let disposeBag = DisposeBag()
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -35,7 +34,14 @@ class LectureView: UIViewController, UITableViewDelegate {
         indicator.color = .gray
         self.tableView.register(UINib(nibName: "ArticleCell", bundle: nil), forCellReuseIdentifier: "Cell")
         swipeRefresh.rx.controlEvent(UIControl.Event.valueChanged).subscribe({_ in
-            self.viewModel.swipeRefresh()
+            self.viewModel.swipeRefresh().subscribe(onNext: { (data) in
+                
+            }, onError: { (error) in
+                self.endRefreshing()
+                self.showError()
+            }, onCompleted: {
+                self.endRefreshing()
+            }).disposed(by: self.disposeBag)
         }).disposed(by: disposeBag)
         self.tableView.addSubview(swipeRefresh)
         let dataSource = RxTableViewSectionedAnimatedDataSource<SectionOfArticle>(configureCell: { (ds: TableViewSectionedDataSource<SectionOfArticle>, tableView: UITableView, indexPath: IndexPath, model: ArticleStruct) -> UITableViewCell in
@@ -44,7 +50,7 @@ class LectureView: UIViewController, UITableViewDelegate {
             return cell
         })
         tableView.rx.setDelegate(self).disposed(by: disposeBag)
-        viewModel.lectureNotifier.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
+        viewModel.lectureProvider.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
         Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, lecture in
             self.tableView.deselectRow(at: indexPath, animated: true)
             let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
@@ -58,28 +64,15 @@ class LectureView: UIViewController, UITableViewDelegate {
         tableView.rx.contentOffset.subscribe { scrollView in
             if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
             {   //一番下
-                self.viewModel.getLectures()
+                self.getLectures()
                 //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
             }else{
                 //一番下以外
                 //@"(´・ω・`)");
             }
         }.disposed(by: disposeBag)
-        viewModel.showLoading.subscribe(onNext: { (showLoading) in
-            if showLoading {
-                self.indicator.startAnimating()
-            } else {
-                self.indicator.stopAnimating()
-            }
-        }).disposed(by: disposeBag)
-        viewModel.refreshing.subscribe(onNext: { (isRefreshing) in
-            self.swipeRefresh.endRefreshing()
-        }).disposed(by: disposeBag)
-        viewModel.errorNotifier.subscribe(onNext: { (error) in
-            self.showError()
-        }).disposed(by: disposeBag)
         self.navigationController?.navigationBar.barTintColor = UIColor.green
-        viewModel.getLectures()
+        getLectures()
     }
 
     // MARK: - Table view data source
@@ -101,45 +94,27 @@ class LectureView: UIViewController, UITableViewDelegate {
     func showError() {
         let alert = UIAlertController(title: "Error", message: "Failed to get lectures."+plsCheckInternet, preferredStyle: UIAlertController.Style.alert)
         alert.addAction(UIAlertAction(title: "Retry", style: UIAlertAction.Style.default, handler: { (action) in
-            self.viewModel.getLectures()
+            self.getLectures()
         }))
         self.present(alert, animated: true, completion: nil)
     }
     
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
+    func getLectures() {
+        indicator.startAnimating()
+        self.viewModel.getLectures().subscribe(onNext: { (data) in
+            
+        }, onError: { (error) in
+            self.endRefreshing()
+            self.showError()
+        }, onCompleted: {
+            self.endRefreshing()
+        }).disposed(by: disposeBag)
     }
-    */
-
-    /*
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+    
+    func endRefreshing() {
+        self.indicator.stopAnimating()
+        self.swipeRefresh.endRefreshing()
     }
-    */
-
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
 
     /*
     // MARK: - Navigation

@@ -13,13 +13,7 @@ class HomeViewModel {
     
     let disposeBag = DisposeBag()
     
-    let articleNotify = PublishRelay<[SectionOfArticle]>()
-    
-    let showLoading = PublishRelay<Bool>()
-    
-    let endRefreshing = PublishRelay<Bool>()
-    
-    let notifyError = PublishRelay<Error>()
+    let articleProvider = PublishRelay<[SectionOfArticle]>()
     
     var articles:[ArticleStruct] = []
     
@@ -27,52 +21,55 @@ class HomeViewModel {
     
     var page = 0
     
-    func getArticle() {
-        if loading {
-            return
-        }
-        showLoading.accept(true)
-        loading = true
-        page+=1
-        print("current page:\(page)")
-        //https://qiita.com/api/v2/items?per_page=%d&page=%d
-        ArticleRequest.shared.getArticles(page: page).subscribe(onNext: { (articles) in
-            for article in articles {
-                self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, likes: article.likes, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
+    func getArticle() -> Observable<[SectionOfArticle]>{
+        return Observable.create({ (observer) -> Disposable in
+            if !self.loading {
+                self.loading = true
+                self.page+=1
+                //https://qiita.com/api/v2/items?per_page=%d&page=%d
+                ArticleRequest.shared.getArticles(page: self.page).subscribe(onNext: { (articles) in
+                    for article in articles {
+                        self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, likes: article.likes, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
+                    }
+                    self.articleProvider.accept([SectionOfArticle(header: "", items: self.articles)])
+                }, onError: { (error) in
+                    print("loading")
+                    observer.onError(error)
+                    self.endLoading()
+                }, onCompleted: {
+                    print("onComplete")
+                    observer.onCompleted()
+                    self.endLoading()
+                }).disposed(by: self.disposeBag)
             }
-            self.articleNotify.accept([SectionOfArticle(header: "", items: self.articles)])
-        }, onError: { (error) in
-            self.notifyError.accept(error)
-            self.endLoading()
-        }, onCompleted: {
-            self.endLoading()
-        }).disposed(by: disposeBag)
+            return Disposables.create()
+        })
     }
     
-    func swipeRefresh() {
-        if loading {
-            return
-        }
-        loading = true
-        page = 1
-        ArticleRequest.shared.getArticles(page: 1).subscribe(onNext: { (articles) in
-            self.articles.removeAll()
-            for article in articles {
-                self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, likes: article.likes, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
+    func swipeRefresh() -> Observable<[SectionOfArticle]>{
+        return Observable.create({ (observer) -> Disposable in
+            if !self.loading {
+                self.loading = true
+                self.page = 1
+                ArticleRequest.shared.getArticles(page: 1).subscribe(onNext: { (articles) in
+                    self.articles.removeAll()
+                    for article in articles {
+                        self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, likes: article.likes, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
+                    }
+                    self.articleProvider.accept([SectionOfArticle(header: "", items: self.articles)])
+                }, onError: { (error) in
+                    observer.onError(error)
+                    self.loading = false
+                }, onCompleted: {
+                    observer.onCompleted()
+                    self.loading = false
+                }).disposed(by: self.disposeBag)
             }
-            self.articleNotify.accept([SectionOfArticle(header: "", items: self.articles)])
-        }, onError: { (error) in
-            self.notifyError.accept(error)
-            self.endRefreshing.accept(true)
-            self.loading = false
-        }, onCompleted: {
-            self.endRefreshing.accept(true)
-            self.loading = false
-        }).disposed(by: disposeBag)
+            return Disposables.create()
+        })
     }
     
     func endLoading() {
-        self.showLoading.accept(false)
         loading = false
     }
 }

@@ -12,7 +12,7 @@ import RxCocoa
 import RxDataSources
 
 class StockView: UIViewController, UITableViewDelegate {
-
+    
     let viewModel = StockViewModel()
     
     var swipeRefresh = UIRefreshControl()
@@ -26,38 +26,30 @@ class StockView: UIViewController, UITableViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
-
+        
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
         initUI()
         swipeRefresh.rx.controlEvent(UIControl.Event.valueChanged).subscribe(onNext: { _ in
-            self.viewModel.swipeRefresh()
+            self.viewModel.swipeRefresh().subscribe(onError: { (error) in
+                self.endRefreshing()
+                self.showError()
+            }, onCompleted: {
+                self.endRefreshing()
+            }).disposed(by: self.disposeBag)
         }).disposed(by: disposeBag)
         TokenObserver.shared.authorizeState.asDriver().drive(noStockView.rx.isHidden).disposed(by: disposeBag)
         StockRequest.shared.isStockAvailable.asDriver().drive(noStockView.rx.isHidden).disposed(by: disposeBag)
         TokenObserver.shared.authorizeStateObserver().subscribe(onNext: { (status) in
             if status {
-                self.viewModel.getStocks()
+                self.getStocks()
             } else {
                 self.viewModel.stocks.removeAll()
                 self.viewModel.page = 0
             }
-        }).disposed(by: disposeBag)
-        viewModel.showLoading.subscribe(onNext: { (isLoading) in
-            if isLoading {
-                self.indicator.startAnimating()
-            } else {
-                self.indicator.stopAnimating()
-            }
-        }).disposed(by: disposeBag)
-        viewModel.refreshing.subscribe { _ in
-            self.swipeRefresh.endRefreshing()
-        }.disposed(by: disposeBag)
-        viewModel.notifyError.subscribe(onNext: { (error) in
-            self.showError()
         }).disposed(by: disposeBag)
         self.navigationController?.navigationBar.barTintColor = UIColor.green
     }
@@ -85,33 +77,33 @@ class StockView: UIViewController, UITableViewDelegate {
             view.articleImage = stock.user.profile_image_url
             view.user_id = stock.user.id
             self.present(view, animated: true, completion: nil)
-        }.disposed(by: disposeBag)
+            }.disposed(by: disposeBag)
         tableView.rx.contentOffset.subscribe { scrollView in
             if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
             {   //一番下
                 if TokenObserver.shared.authorizeState.value {
-                    self.viewModel.getStocks()
+                    self.getStocks()
                 }
                 //@"ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!");
             }else{
                 //一番下以外
                 //@"(´・ω・`)");
             }
-        }.disposed(by: disposeBag)
+            }.disposed(by: disposeBag)
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
     
     // MARK: - Table view data source
-
+    
     func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
         return 1
     }
-
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return cellHeight
     }
@@ -124,53 +116,33 @@ class StockView: UIViewController, UITableViewDelegate {
     func showError() {
         let alert = UIAlertController(title: "Error", message: "Failed to load stocks."+plsCheckInternet, preferredStyle: UIAlertController.Style.alert)
         alert.addAction(UIAlertAction(title: "Retry", style: UIAlertAction.Style.default, handler: { (action) in
-            self.viewModel.getStocks()
+            self.getStocks()
         }))
         self.present(alert, animated: true, completion: nil)
     }
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
+    
+    func getStocks() {
+        indicator.startAnimating()
+        viewModel.getStocks().subscribe(onError: { (error) in
+            self.endRefreshing()
+            self.showError()
+        }, onCompleted: {
+            self.endRefreshing()
+        }).disposed(by: disposeBag)
     }
-    */
-
-    /*
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+    
+    func endRefreshing() {
+        self.indicator.stopAnimating()
+        self.swipeRefresh.endRefreshing()
     }
-    */
-
     /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
+     // MARK: - Navigation
+     
+     // In a storyboard-based application, you will often want to do a little preparation before navigation
+     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+     // Get the new view controller using segue.destinationViewController.
+     // Pass the selected object to the new view controller.
+     }
+     */
+    
 }
