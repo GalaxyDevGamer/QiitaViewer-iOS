@@ -32,6 +32,7 @@ class HomeViewModel {
                         self.articles.append(ArticleStruct(id: article.id!, title: article.title!, url: article.url!, likes: article.likes, user: UserStruct(id: article.user.id!, profile_image_url: article.user.profile_image_url!)))
                     }
                     self.articleProvider.accept([SectionOfArticle(header: "", items: self.articles)])
+                    observer.onNext([SectionOfArticle(header: "", items: self.articles)])
                 }, onError: { (error) in
                     print("loading")
                     observer.onError(error)

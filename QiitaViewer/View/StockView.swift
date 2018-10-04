@@ -70,13 +70,7 @@ class StockView: UIViewController, UITableViewDelegate {
         viewModel.stockNotify.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
         Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, stock in
             self.tableView.deselectRow(at: indexPath, animated: true)
-            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-            view.articleID = stock.id
-            view.articleTitle = stock.title
-            view.articleUrl = stock.url
-            view.articleImage = stock.user.profile_image_url
-            view.user_id = stock.user.id
-            self.present(view, animated: true, completion: nil)
+            self.present(ViewProvider.get.browser(article: stock), animated: true, completion: nil)
             }.disposed(by: disposeBag)
         tableView.rx.contentOffset.subscribe { scrollView in
             if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)

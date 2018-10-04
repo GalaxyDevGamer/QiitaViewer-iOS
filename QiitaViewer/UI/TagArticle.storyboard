@@ -4,7 +4,6 @@
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -29,7 +28,7 @@
         <!--Tag Article View-->
         <scene sceneID="A3s-gS-2hX">
             <objects>
-                <viewController storyboardIdentifier="TagArticleBoard" useStoryboardIdentifierAsRestorationIdentifier="YES" id="2U3-NK-hUq" customClass="TagArticleView" customModule="QiitaViewer" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="TagArticleBoard" hidesBottomBarWhenPushed="YES" useStoryboardIdentifierAsRestorationIdentifier="YES" id="2U3-NK-hUq" customClass="TagArticleView" customModule="QiitaViewer" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="MrI-K4-zhv">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

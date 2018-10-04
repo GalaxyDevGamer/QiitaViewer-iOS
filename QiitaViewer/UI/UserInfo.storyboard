@@ -4,7 +4,6 @@
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -29,7 +28,7 @@
         <!--UserInfoBoard-->
         <scene sceneID="v1O-cc-VHA">
             <objects>
-                <viewController storyboardIdentifier="UserInfoBoard" title="UserInfoBoard" useStoryboardIdentifierAsRestorationIdentifier="YES" id="r2E-lJ-fQh" customClass="UserInfoView" customModule="QiitaViewer" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="UserInfoBoard" title="UserInfoBoard" hidesBottomBarWhenPushed="YES" useStoryboardIdentifierAsRestorationIdentifier="YES" id="r2E-lJ-fQh" customClass="UserInfoView" customModule="QiitaViewer" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Ush-3y-2xy">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -160,6 +159,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="User48pt" width="48" height="48"/>
+        <image name="User48pt" width="144" height="144"/>
     </resources>
 </document>

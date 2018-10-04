@@ -42,16 +42,13 @@ class HomeView: UIViewController, UITableViewDelegate, UICollectionViewDelegate,
             }).disposed(by: self.disposeBag)
         }).disposed(by: disposeBag)
         profile.rx.tap.asDriver().drive(onNext: { [unowned self] _ in
-            let view = UIStoryboard(name: "UserInfo", bundle: nil).instantiateViewController(withIdentifier: "UserInfoBoard") as! UserInfoView
-            view.hidesBottomBarWhenPushed = true
-            self.navigationController?.pushViewController(view, animated: true)
+            self.navigationController?.pushViewController(ViewProvider.get.userInfoView(), animated: true)
         }).disposed(by: disposeBag)
         NotificationCenter.default.rx.notification(Notification.Name("updateProfileImage"), object: nil).subscribe({ (notification) in
             self.updateProfileImage()
         }).disposed(by: disposeBag)
         initTableView()
         initCollectionView()
-        getArticle()
     }
     
     func initNavigationBar() {
@@ -95,13 +92,7 @@ class HomeView: UIViewController, UITableViewDelegate, UICollectionViewDelegate,
         viewModel.articleProvider.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
         Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, article in
             self.tableView.deselectRow(at: indexPath, animated: true)
-            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-            view.articleID = article.id
-            view.articleTitle = article.title
-            view.articleUrl = article.url
-            view.articleImage = article.user.profile_image_url
-            view.user_id = article.user.id
-            self.present(view, animated: true, completion: nil)
+            self.present(ViewProvider.get.browser(article: article), animated: true, completion: nil)
             }.disposed(by: disposeBag)
         tableView.rx.contentOffset.subscribe { contentOffset in
             if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
@@ -137,13 +128,7 @@ class HomeView: UIViewController, UITableViewDelegate, UICollectionViewDelegate,
         viewModel.articleProvider.bind(to: collectionView.rx.items(dataSource: collectionDataSource)).disposed(by: disposeBag)
         Observable.zip(collectionView.rx.itemSelected, collectionView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, article in
             self.tableView.deselectRow(at: indexPath, animated: true)
-            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-            view.articleID = article.id
-            view.articleTitle = article.title
-            view.articleUrl = article.url
-            view.articleImage = article.user.profile_image_url
-            view.user_id = article.user.id
-            self.present(view, animated: true, completion: nil)
+            self.present(ViewProvider.get.browser(article: article), animated: true, completion: nil)
             }.disposed(by: disposeBag)
     }
     

@@ -18,6 +18,7 @@
 		6B006C7421527FA900DA7B58 /* TagArticleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B006C7321527FA900DA7B58 /* TagArticleViewModel.swift */; };
 		6B02FFE72157817F000E8CF2 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B02FFE62157817F000E8CF2 /* WebKit.framework */; };
 		6B02FFEA21578BA4000E8CF2 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6B02FFEC21578BA4000E8CF2 /* Localizable.strings */; };
+		6B15E75121666B6B0019A2EC /* ViewProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B15E75021666B6B0019A2EC /* ViewProvider.swift */; };
 		6B25D8D62152B0D600C60EAB /* SectionOfTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B25D8D52152B0D600C60EAB /* SectionOfTag.swift */; };
 		6B25D8DC2153FE9400C60EAB /* TagStruct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B25D8DB2153FE9400C60EAB /* TagStruct.swift */; };
 		6B25D8DE21540A9400C60EAB /* TagArticleStruct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B25D8DD21540A9400C60EAB /* TagArticleStruct.swift */; };
@@ -77,6 +78,7 @@
 		6B02FFE62157817F000E8CF2 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		6B02FFEB21578BA4000E8CF2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6B02FFED21578C16000E8CF2 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		6B15E75021666B6B0019A2EC /* ViewProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewProvider.swift; sourceTree = "<group>"; };
 		6B25D8D52152B0D600C60EAB /* SectionOfTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionOfTag.swift; sourceTree = "<group>"; };
 		6B25D8DB2153FE9400C60EAB /* TagStruct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagStruct.swift; sourceTree = "<group>"; };
 		6B25D8DD21540A9400C60EAB /* TagArticleStruct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagArticleStruct.swift; sourceTree = "<group>"; };
@@ -186,6 +188,7 @@
 			children = (
 				6BAD6F052149683000C7AAAA /* ArticleManager.swift */,
 				6B8EF64D2163A07C008BE9B4 /* AlertHelper.swift */,
+				6B15E75021666B6B0019A2EC /* ViewProvider.swift */,
 			);
 			path = Helper;
 			sourceTree = "<group>";
@@ -506,6 +509,7 @@
 				6BF5D437214BF8A700A42A58 /* StockRequest.swift in Sources */,
 				6B25D8DE21540A9400C60EAB /* TagArticleStruct.swift in Sources */,
 				6B25D8E021540B1F00C60EAB /* SectionOfTagArticle.swift in Sources */,
+				6B15E75121666B6B0019A2EC /* ViewProvider.swift in Sources */,
 				6BF5D432214AD0EA00A42A58 /* TagView.swift in Sources */,
 				6B006C6421511E7800DA7B58 /* HomeViewModel.swift in Sources */,
 				6B25D8DC2153FE9400C60EAB /* TagStruct.swift in Sources */,

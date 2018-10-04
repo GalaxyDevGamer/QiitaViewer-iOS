@@ -34,10 +34,7 @@ class TagView: UIViewController, UITableViewDelegate {
         dataSource.canEditRowAtIndexPath = { tableView, indexPath in true}
         Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(TagStruct.self)).bind { indexPath, tag in
             self.tableView.deselectRow(at: indexPath, animated: true)
-            let view = UIStoryboard(name: "TagArticle", bundle: nil).instantiateViewController(withIdentifier: "TagArticleBoard") as! TagArticleView
-            view.name = tag.name
-            view.hidesBottomBarWhenPushed = true
-            self.navigationController?.pushViewController(view, animated: true)
+            self.navigationController?.pushViewController(ViewProvider.get.tagArticleView(name: tag.name), animated: true)
             }.disposed(by: disposeBag)
         tableView.rx.itemDeleted.subscribe(onNext: { indexPath in
             self.viewModel.deleteTag(index: indexPath.row)

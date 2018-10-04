@@ -41,13 +41,7 @@ class TagArticleView: UIViewController, UITableViewDelegate {
         viewModel.articleNotifier.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
         Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(TagArticleStruct.self)).bind { indexPath, article in
             self.tableView.deselectRow(at: indexPath, animated: true)
-            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-            view.articleID = article.id
-            view.articleTitle = article.title
-            view.articleUrl = article.url
-            view.articleImage = article.profile_image_url
-            view.user_id = article.user_id
-            self.present(view, animated: true, completion: nil)
+            self.present(ViewProvider.get.openBrowserFromTag(article: article), animated: true, completion: nil)
             }.disposed(by: disposeBag)
         tableView.rx.itemDeleted.subscribe (onNext: { indexPath in
             self.viewModel.removeArticle(index: indexPath.row)

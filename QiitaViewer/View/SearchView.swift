@@ -44,13 +44,7 @@ class SearchView: UIViewController, UITableViewDelegate {
         viewModel.resultProvider.bind(to: tableView.rx.items(dataSource: dataSource)).disposed(by: disposeBag)
         Observable.zip(tableView.rx.itemSelected, tableView.rx.modelSelected(ArticleStruct.self)).bind { indexPath, result in
             self.tableView.deselectRow(at: indexPath, animated: true)
-            let view = UIStoryboard(name: "Browser", bundle: nil).instantiateViewController(withIdentifier: "BrowserBoard") as! BrowserView
-            view.articleID = result.id
-            view.articleTitle = result.title
-            view.articleUrl = result.url
-            view.articleImage = result.user.profile_image_url
-            view.user_id = result.user.id
-            self.present(view, animated: true, completion: nil)
+            self.present(ViewProvider.get.browser(article: result), animated: true, completion: nil)
             }.disposed(by: disposeBag)
         tableView.rx.contentOffset.subscribe { scrollView in
             if(self.tableView.contentOffset.y >= (self.tableView.contentSize.height - self.tableView.bounds.size.height)-10)
